@@ -8,11 +8,24 @@ const ROLES = [
   { key: 'site_admin', title: 'Админ сайта', canEdit: true, canAssign: true }
 ];
 
-const STORAGE_KEY = 'ror_sp_portal_db_v1.1';
+const STORAGE_KEY = 'ror_sp_portal_db_v1.1.1';
 const $ = (selector) => document.querySelector(selector);
 const roleByKey = (key) => ROLES.find((role) => role.key === key) || ROLES[0];
 
-// База данных
+const DECREES_DATA = [
+  { id: 1, title: '📵 Постановление №1 — «Рация УК»', body: 'Каждый боец Ударного Взвода обязан во время пребывания на ОВО/ВО находиться в голосовом канале «Рация УК» в ЗКС либо на вспомогательной частоте «Рация УК» на комлинке.<br><br><b>«Связь»</b> — команда, при которой каждый боец обязан зайти на вспомогательную рацию УК. При отсутствии рации — предварительно создать её.<br><br>• Подключиться: F4 → Рация → УК|CT → Пароль: 1687.<br>• Создать: F4 → Рация → Создать канал → Тип: «Приватный», Название: УК|CT, Пароль: 1687.' },
+  { id: 2, title: '💥 Постановление №2 — «Выдача штрафбата»', body: 'При многократных нарушениях со стороны бойца CT, неадекватном поведении или тяжких нарушениях Ударный клон имеет право написать заявку о выдаче штрафбата. Заявку одобряет CO-SP, командующий состав формирования и ВК.' },
+  { id: 3, title: '🚨 Постановление №3 — «Посторонние лица в казарме CT»', body: 'При нахождении в казарме лиц без полномочий на проход Ударный клон обязан уточнить, с чьего разрешения и с какой целью они находятся в казарме. При неуважительной причине сопроводить на выход, при отказе вызвать гвардию.' },
+  { id: 4, title: '📜 Постановление №4 — «Норма докладов»', body: 'Каждый боец обязуется еженедельно выполнять работу:<br>• SOL-SP — 5 докладов в неделю.<br>• OFC-SP — 3 доклада в неделю.<br>• DEP-SP — без нормы, работа по рассмотрению и указанию CO-SP+.<br><br>За невыполнение нормы: 1 неделя — устный выговор; 2 недели подряд — письменный; 3 недели подряд — снятие.' },
+  { id: 5, title: '🎁 Постановление №5 — «Поощрение за работу»', body: 'Каждый боец имеет право запросить поощрение в канале «#《🏅》поощрения» за проделанную работу по системе повышения и поощрений Ударного взвода.' },
+  { id: 6, title: '⚔️ Постановление №6 — «О недопустимости нарушений Устава бойцами УК»', body: 'При нарушении Устава бойцами УК разрешено выдавать только ДН — напоминание пункта Устава. При заключении бойца УК в КПЗ он получает письменный выговор внутри структуры УК.' },
+  { id: 7, title: '🪶 Постановление №7 — «Актуальность таблицы»', body: 'При изменении звания, должности, позывного или основной формы в личном деле боец обязан отписать в канал «#《📝》состав-sp» в течение 3 дней.' },
+  { id: 8, title: '🖥️ Постановление №8 — «Подача рапортов»', body: 'Все доклады из канала «#《⚖️》наказания» должны сразу дублироваться в канал Ударных Клонов «#👮🏻│дв-скт-передачи».' },
+  { id: 9, title: '⛳ Постановление №9 — «Об увольнительных»', body: 'Каждый боец имеет право запросить увольнение в канале «#《⛳》увольнение-sp» в соответствии с 5 Директивой CT.' },
+  { id: 10, title: '🚷 Постановление №10 — «О выговорах»', body: 'За неисполнение постановлений, приказов и предписаний каждый боец подлежит санкциям: устным и письменным выговорам.' },
+  { id: 11, title: '👁️ Постановление №11 — «О должностных обязанностях»', body: 'Регламентирует права и обязанности Куратора, Командира, Заместителя, Офицеров и Рядового состава Ударного Взвода.' }
+];
+
 let db = loadDb();
 let currentView = 'home';
 
@@ -29,11 +42,10 @@ function createInitialDb() {
       { id: 'admin-id', steamId: '76561198000000001', nickname: 'Владелец сайта', callsign: 'Site Admin', role: 'site_admin', password: 'admin' }
     ],
     blocks: {
-      decrees: { title: 'Постановления', body: 'Постановления УК...' }, // Здесь будет полный текст
-      documents: { title: 'Документы', body: '• Система повышения\n• Таблица состава' },
-      hierarchy: { title: 'Иерархия', body: 'Командир УК — CO-SP...' },
-      medals: { title: 'Медали', body: 'Высшая преданность делу...' },
-      forms: { title: 'Формы', body: 'SP: DC-15LE, Westar-M5...' }
+      documents: { title: 'Документы', body: '• Система повышения и поощрений\n• Таблица состава\n• Нормативно-правовой блок ВАР\n• Регламент для рекрута\n• Этика Ударного клона' },
+      hierarchy: { title: 'Иерархия', body: 'Куратор — без приписки\nКомандир УК — CO-SP | CT\nЗам. Командира УК — DEP-SP | CT\nОфицер УК — OFC-SP | CT\nСолдат УК — SOL-SP | CT\nРекрут УК — R-SP | CT' },
+      medals: { title: 'Медали', body: 'Высшая преданность делу, Щит Отечества, За мужество и честь, Ударный клон месяца, Оперативная служба, Верность долгу, Победитель преступности, За отличие в службе, Верность Уставу, Первоклассник, Защитник правопорядка.' },
+      forms: { title: 'Формы', body: 'SP: DC-15LE, Westar-M5, DP-23, DC-17, Dual DC-17, Clone Shield, термальная граната, крюк-кошка, парализатор, наручники, броня 300.\nMED-SP: Westar-M5, DC-17, Bacta Injector, Bacta Grenade, броня 125.\nPR-SP: DC-19LE, Westar-M5, DP-23, Dual DC-17, JT-12, броня 300.' }
     }
   };
 }
@@ -46,14 +58,12 @@ function currentUser() {
   return db.users.find(u => u.id === db.currentUserId) || null;
 }
 
-// Навигация
 function switchView(view) {
   currentView = view;
   render();
   window.scrollTo(0, 0);
 }
 
-// Рендеринг компонентов
 function renderNav() {
   const user = currentUser();
   const nav = $('#mainNav');
@@ -81,7 +91,7 @@ const VIEWS = {
         <div class="hero-copy">
           <p class="eyebrow">Закрытый портал · CT Legion</p>
           <h1>Рота ударных клонов</h1>
-          <p class="lead">${user ? `Добро пожаловать, ${user.nickname}. Ваша роль: <b>${role.title}</b>.` : 'Для неавторизованного бойца открыт только путь новичка. Зарегистрируйся через Steam, чтобы получить доступ.'}</p>
+          <p class="lead">${user ? `Профиль <b>${user.nickname}</b> подключён. Роль: <b>${role.title}</b>. Доступ выдан согласно иерархии портала.` : 'Для неавторизованного бойца открыт только путь новичка и общие постановления. Зарегистрируйся через Steam, чтобы получить личный кабинет и доступ по роли.'}</p>
           <div class="hero-actions">
             ${user ? `<button class="btn primary" onclick="switchView('database')">Личный кабинет</button>` : `
               <button class="btn primary" id="openLoginBtn">Войти в профиль</button>
@@ -93,25 +103,33 @@ const VIEWS = {
           <span class="status-dot ${user ? 'online' : ''}"></span>
           <p class="eyebrow">Статус</p>
           <h2>${user ? user.nickname : 'Гость'}</h2>
-          <p>${user ? user.callsign : 'Доступ ограничен'}</p>
+          <p>${user ? user.callsign : 'Доступ: только раздел «Путь новичка»'}</p>
+          ${user ? `<p><b>${role.title}</b></p>` : ''}
         </aside>
       </section>
       <section class="shell section">
-        <div class="section-heading"><h2>Путь новичка</h2></div>
+        <div class="section-heading">
+          <p class="eyebrow">Открытый раздел</p>
+          <h2>Путь новичка</h2>
+          <p>Этот раздел объясняет, куда нажимать, что изучать и как войти в службу.</p>
+        </div>
         <div class="path-grid">
-          <article class="card step"><span>01</span><h3>Познакомься</h3><p>Ударный взвод CT поддерживает порядок на сервере.</p></article>
-          <article class="card step"><span>02</span><h3>Рация</h3><p>Частота: УК|CT. Пароль: 1687.</p></article>
-          <article class="card step"><span>03</span><h3>Регистрация</h3><p>Используй Steam ID для создания профиля.</p></article>
+          <article class="card step"><span>01</span><h3>Познакомься с взводом</h3><p>Ударный взвод CT поддерживает порядок, дисциплину и безопасность корпуса на сервере Rise of Republic.</p></article>
+          <article class="card step"><span>02</span><h3>Изучи базовые каналы</h3><p>Следи за объявлениями, общайся в чате УК, рапорты пиши в соответствующий канал.</p></article>
+          <article class="card step"><span>03</span><h3>Подготовь рацию</h3><p>Рация УК: F4 → Рация → УК|CT. Пароль: 1687. Если канала нет — создай приватный.</p></article>
+          <article class="card step"><span>04</span><h3>Зарегистрируйся</h3><p>Нажми регистрацию через Steam. Данные сохраняются в браузере как локальная база.</p></article>
         </div>
       </section>`;
   },
   decrees: () => `
     <section class="shell section">
-      <div class="section-heading"><h2>Постановления Ударного взвода</h2></div>
+      <div class="section-heading">
+        <p class="eyebrow">Правила и нормы</p>
+        <h2>Постановления Ударного взвода</h2>
+        <p>Обязательны к выполнению каждым бойцом Ударного Взвода.</p>
+      </div>
       <div class="decree-list">
-        <article class="decree"><h3>📵 №1 — «Рация УК»</h3><p>Пароль: 1687. Частота: УК|CT.</p></article>
-        <article class="decree"><h3>💥 №2 — «Штрафбат»</h3><p>Выдается при многократных нарушениях.</p></article>
-        <article class="decree"><h3>📜 №4 — «Норма докладов»</h3><p>SOL-SP: 5/нед. OFC-SP: 3/нед.</p></article>
+        ${DECREES_DATA.map(d => `<article class="decree"><h3>${d.title}</h3><p>${d.body}</p></article>`).join('')}
       </div>
     </section>`,
   database: () => {
@@ -119,14 +137,29 @@ const VIEWS = {
     if (!user) return VIEWS.home();
     return `
       <section class="shell section">
-        <div class="section-heading"><h2>Личное дело</h2></div>
+        <div class="section-heading">
+          <p class="eyebrow">Локальная БД портала</p>
+          <h2>Данные пользователя и роли</h2>
+        </div>
         <div class="db-grid">
-          <article class="card"><h3>Ваши данные</h3><dl>
+          <article class="card"><h3>Ваш профиль</h3><dl>
             <dt>Steam ID</dt><dd>${user.steamId}</dd>
+            <dt>Ник</dt><dd>${user.nickname}</dd>
             <dt>Позывной</dt><dd>${user.callsign}</dd>
             <dt>Роль</dt><dd>${roleByKey(user.role).title}</dd>
           </dl></article>
-          <article class="card"><h3>Документы</h3><p>${db.blocks.documents.body.replaceAll('\n', '<br>')}</p></article>
+          <article class="card"><h3>Иерархия доступа</h3><ol class="role-list">
+            ${ROLES.map(r => `<li><b>${r.title}</b> — ${r.canEdit ? 'редактирование' : 'просмотр'}</li>`).join('')}
+          </ol></article>
+        </div>
+      </section>
+      <section class="shell section">
+        <div class="section-heading"><h2>Закрытые материалы</h2></div>
+        <div class="content-grid">
+          <article class="card content-card"><h3>Документы</h3><p>${db.blocks.documents.body.replaceAll('\n', '<br>')}</p></article>
+          <article class="card content-card"><h3>Иерархия</h3><p>${db.blocks.hierarchy.body.replaceAll('\n', '<br>')}</p></article>
+          <article class="card content-card"><h3>Медали</h3><p>${db.blocks.medals.body.replaceAll('\n', '<br>')}</p></article>
+          <article class="card content-card"><h3>Формы</h3><p>${db.blocks.forms.body.replaceAll('\n', '<br>')}</p></article>
         </div>
       </section>`;
   },
@@ -136,10 +169,25 @@ const VIEWS = {
     if (!role || (!role.canEdit && !role.canAssign)) return VIEWS.home();
     return `
       <section class="shell section">
-        <div class="section-heading"><h2>Кабинет КМД</h2></div>
+        <div class="section-heading">
+          <p class="eyebrow">Кабинет КМД</p>
+          <h2>Управление порталом</h2>
+        </div>
         <div class="command-grid">
-          <article class="card"><h3>Управление составом</h3><div id="usersList"></div></article>
-          <article class="card"><h3>Редактор блоков</h3><div id="editorUI"></div></article>
+          <article class="card">
+            <div class="card-title"><h3>Выдача ролей</h3><span class="permission">${role.canAssign ? 'Разрешено' : 'Нет прав'}</span></div>
+            <div id="usersList"></div>
+          </article>
+          <article class="card">
+            <div class="card-title"><h3>Редактор блоков</h3><span class="permission">${role.canEdit ? 'Разрешено' : 'Нет прав'}</span></div>
+            <label>Блок</label>
+            <select id="sectionSelect" onchange="updateEditor(this.value)">
+              ${Object.entries(db.blocks).map(([key, b]) => `<option value="${key}">${b.title}</option>`).join('')}
+            </select>
+            <label>Содержимое</label>
+            <textarea id="sectionEditor" rows="10" ${role.canEdit ? '' : 'disabled'}></textarea>
+            <button class="btn primary" onclick="saveBlock()" ${role.canEdit ? '' : 'disabled'}>Сохранить</button>
+          </article>
         </div>
       </section>`;
   }
@@ -150,7 +198,6 @@ function render() {
   const app = $('#appContent');
   app.innerHTML = VIEWS[currentView] ? VIEWS[currentView]() : VIEWS.home();
   
-  // Привязка событий после рендеринга
   if (currentView === 'home' && !currentUser()) {
     $('#openLoginBtn').onclick = () => { switchTab('login'); $('#steamModal').showModal(); };
     $('#openRegisterBtn').onclick = () => { switchTab('register'); $('#steamModal').showModal(); };
@@ -158,6 +205,7 @@ function render() {
   
   if (currentView === 'command') {
     renderUsersList();
+    updateEditor($('#sectionSelect').value);
   }
 }
 
@@ -179,8 +227,19 @@ function updateUserRole(userId, newRole) {
   if (user) {
     user.role = newRole;
     saveDb();
-    alert('Роль обновлена');
   }
+}
+
+function updateEditor(key) {
+  const editor = $('#sectionEditor');
+  if (editor) editor.value = db.blocks[key].body;
+}
+
+function saveBlock() {
+  const key = $('#sectionSelect').value;
+  db.blocks[key].body = $('#sectionEditor').value;
+  saveDb();
+  alert('Блок сохранен');
 }
 
 // Auth logic
@@ -241,5 +300,4 @@ $('#resetDemo').onclick = () => {
   }
 };
 
-// Start
 render();
