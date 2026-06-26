@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rise of Republic · Ударный взвод CT</title>
+  <meta name="description" content="Закрытый портал Ударного взвода CT для сервера Rise of Republic: путь новичка, регистрация через Steam, роли и кабинет командования." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="shell header">
+    <a class="brand" href="#top" aria-label="Ударный взвод CT"><span class="brand-mark">CT</span><span>Ударный взвод · Rise of Republic</span></a>
+    <nav class="nav" aria-label="Навигация портала">
+      <a href="#recruit-path">Путь новичка</a>
+      <a class="auth-only" href="#database">База</a>
+      <a class="auth-only" href="#command">Кабинет КМД</a>
+      <button class="btn ghost" id="logoutBtn" type="button" hidden>Выйти</button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero shell">
+      <div class="hero-copy">
+        <p class="eyebrow">Закрытый портал · Steam-идентификация · CT Legion</p>
+        <h1>Рота ударных клонов</h1>
+        <p class="lead" id="heroLead">Для неавторизованного бойца открыт только путь новичка. Зарегистрируйся через Steam, чтобы получить личный кабинет и доступ по роли.</p>
+        <div class="hero-actions">
+          <button class="btn primary" id="openSteamModal" type="button">Зарегистрироваться через Steam</button>
+          <a class="btn secondary" href="#recruit-path">Сначала изучить путь новичка</a>
+        </div>
+      </div>
+      <aside class="status-card" id="profileCard" aria-live="polite">
+        <span class="status-dot"></span>
+        <p class="eyebrow">Статус</p>
+        <h2>Гость</h2>
+        <p>Доступ: только раздел «Путь новичка».</p>
+      </aside>
+    </section>
+
+    <section class="shell section" id="recruit-path">
+      <div class="section-heading">
+        <p class="eyebrow">Открытый раздел</p>
+        <h2>Путь новичка</h2>
+        <p>Этот раздел виден всем до регистрации. Он объясняет, куда нажимать, что изучать и как войти в службу.</p>
+      </div>
+      <div class="path-grid">
+        <article class="card step"><span>01</span><h3>Познакомься с взводом</h3><p>Ударный взвод CT поддерживает порядок, дисциплину и безопасность корпуса на сервере Rise of Republic.</p></article>
+        <article class="card step"><span>02</span><h3>Изучи базовые каналы</h3><p>Следи за «#《📣》объявления-ук», общайся в «#《🚬》чат-ук», рапорты пиши в «#《📚》рапорты-ук», наказания — в «#《⚖️》наказания».</p></article>
+        <article class="card step"><span>03</span><h3>Подготовь рацию</h3><p>Рация УК: F4 → Рация → УК|CT. Пароль: 1687. Если канала нет — создай приватный УК|CT с этим паролем.</p></article>
+        <article class="card step"><span>04</span><h3>Зарегистрируйся</h3><p>Нажми регистрацию через Steam. На GitHub Pages это демо-режим: данные сохраняются в браузере как локальная база.</p></article>
+      </div>
+    </section>
+
+    <section class="locked-only shell section lock-screen" id="lockedNotice">
+      <div class="lock-icon">🔒</div>
+      <h2>Остальная информация закрыта</h2>
+      <p>Постановления, документы, формы, кабинет КМД и выдача ролей откроются после регистрации и назначения роли.</p>
+      <button class="btn primary" id="openSteamModal2" type="button">Войти через Steam</button>
+    </section>
+
+    <div class="auth-only" id="authorizedContent">
+      <section class="shell section" id="database">
+        <div class="section-heading">
+          <p class="eyebrow">Локальная БД портала</p>
+          <h2>Данные пользователя и роли</h2>
+          <p>Статическая версия хранит данные в LocalStorage. Для настоящего Steam OpenID нужна серверная часть с базой PostgreSQL/MySQL.</p>
+        </div>
+        <div class="db-grid">
+          <article class="card"><h3>Текущий пользователь</h3><dl id="currentUserData"></dl></article>
+          <article class="card"><h3>Иерархия доступа</h3><ol class="role-list" id="roleList"></ol></article>
+        </div>
+      </section>
+
+      <section class="shell section" id="command">
+        <div class="section-heading">
+          <p class="eyebrow">Кабинет КМД</p>
+          <h2>Управление порталом</h2>
+          <p>Редактирование блоков доступно с роли «Зам. Командира» и выше. Выдача ролей доступна Зам. КМД, КМД и Админу сайта.</p>
+        </div>
+        <div class="command-grid">
+          <article class="card editor-card">
+            <div class="card-title"><h3>Редактируемые блоки</h3><span class="permission" id="editPermission">Нет прав</span></div>
+            <label for="sectionSelect">Блок</label>
+            <select id="sectionSelect"></select>
+            <label for="sectionEditor">Содержимое</label>
+            <textarea id="sectionEditor" rows="12"></textarea>
+            <button class="btn primary" id="saveSection" type="button">Сохранить блок</button>
+          </article>
+
+          <article class="card users-card">
+            <div class="card-title"><h3>Выдача ролей</h3><span class="permission" id="rolePermission">Нет прав</span></div>
+            <div id="usersList" class="users-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="shell section" id="contentBlocks"></section>
+    </div>
+  </main>
+
+  <dialog class="steam-modal" id="steamModal">
+    <form method="dialog" class="modal-card" id="steamForm">
+      <button class="close" value="cancel" aria-label="Закрыть">×</button>
+      <p class="eyebrow">Steam Login</p>
+      <h2>Регистрация через Steam</h2>
+      <p>GitHub Pages не может безопасно выполнить настоящий Steam OpenID без backend. Поэтому здесь сделан прототип: портал подтягивает введённые Steam-поля и сохраняет их в локальную БД браузера.</p>
+      <label>Steam ID<input name="steamId" placeholder="76561198000000000" required></label>
+      <label>Ник Steam<input name="nickname" placeholder="Griffon / Black / Masalini" required></label>
+      <label>Discord / позывной<input name="callsign" placeholder="CT | R - SP | Позывной" required></label>
+      <button class="btn primary" value="default" type="submit">Создать профиль</button>
+    </form>
+  </dialog>
+
+  <footer class="shell footer"><p>CT Legion · Rise of Republic · Ударный взвод</p><button class="link-button" id="resetDemo" type="button">Сбросить демо-БД</button></footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
