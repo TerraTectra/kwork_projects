@@ -8,7 +8,7 @@ const ROLES = [
   { key: 'site_admin', title: 'Админ сайта', canEdit: true, canAssign: true }
 ];
 
-const STORAGE_KEY = 'ror_sp_portal_db_v1.1.2';
+const STORAGE_KEY = 'ror_sp_portal_db_v1.1.3';
 const $ = (selector) => document.querySelector(selector);
 const roleByKey = (key) => ROLES.find((role) => role.key === key) || ROLES[0];
 
@@ -26,13 +26,51 @@ const DECREES_DATA = [
   { id: 11, title: '👁️ Постановление №11 — «О должностных обязанностях»', body: 'Регламентирует права и обязанности Куратора, Командира, Заместителя, Офицеров и Рядового состава Ударного Взвода.' }
 ];
 
-const EXTERNAL_LINKS = [
-  { title: 'Система повышения и поощрений', url: 'https://docs.google.com/document/d/1umA90mpK-eIXt5lcNxu-hBBuBj5w2y2gZWUXQyxbZFc/edit?tab=t.0#heading=h.kyvpmn4y9bti' },
-  { title: 'Таблица состава УК', url: 'https://docs.google.com/spreadsheets/d/1yFM2jvgQBz7SfKeudbbXErFdQx9J6ZhAxbVudufKg0U/edit?gid=1466119767#gid=1466119767' },
-  { title: 'Нормативно-правовой блок ВАР', url: 'https://docs.google.com/document/d/14hcJq_eFh6qtyCFonZB8r8nvVH9Ys0JRHErcJKK1n90/edit?tab=t.0' },
-  { title: 'Регламент для рекрута', url: 'https://docs.google.com/document/d/1kZtTgY8MH0WU2NWqVLicqX0P0TTM0-AYfHYM4T_UUFA/edit?tab=t.0' },
-  { title: 'Этика Ударного клона', url: 'https://docs.google.com/document/d/1ieO8_mrhIa9Gsoa-7seIpERf56HTAsx-o-B_pA5u5as/edit?tab=t.0' }
-];
+const CONTENT_BLOCKS = {
+  upgrade_system: {
+    title: 'Система повышения и поощрений',
+    body: `<h3>Инструкция</h3>
+    <p>Повышение происходит на основе проделанной работы, зафиксированной в рапортах и докладах. Для перехода на следующий ранг необходимо выполнить установленные нормы.</p>
+    <h4>Сержантский состав</h4>
+    <ul>
+      <li><b>R-SP → SOL-SP</b>: Пройти обучение, сдать регламенты, отстоять испытательный срок.</li>
+      <li><b>SOL-SP → SGT-SP</b>: Выполнение еженедельной нормы (5 докладов), участие в 3 операциях, отсутствие выговоров.</li>
+    </ul>
+    <h4>Поощрения</h4>
+    <p>За активную службу, предотвращение крупных нарушений и помощь командованию бойцы могут получить внеочередное звание или медали.</p>`
+  },
+  legal_block: {
+    title: 'Нормативно-Правовой Блок ВАР',
+    body: `<h4>🔴 Золотые правила (ЗП)</h4>
+    <p>1. Приказ командира — закон для подчиненного.<br>2. Ударный клон — образец дисциплины.<br>3. Оружие применяется только в случае крайней необходимости.</p>
+    <h4>⚪ Воинский этикет (ВЭ)</h4>
+    <p>Соблюдение субординации, вежливое обращение к старшим по званию и гражданским лицам. Обращение только по званию или "Сэр/Мэм".</p>
+    <h4>🔵 Регламент ношения оружия (РНО)</h4>
+    <p>Оружие должно быть на предохранителе в мирное время. Запрещено бесцельное размахивание или стрельба в воздух.</p>`
+  },
+  recruit_regulations: {
+    title: 'Регламент для рекрута',
+    body: `<p>Свод правил для новоприбывших бойцов:</p>
+    <ol>
+      <li>Разрешено предотвращать нарушения — заломать руки и положить бойца на пол, после вызвать гвардию.</li>
+      <li>Разрешено носить форму УК только со 2-го этапа обучения на SP.</li>
+      <li>Запрещено носить вооружение в ЗК (Примечание: Разрешается ношение второстепенного вооружения).</li>
+      <li>Запрещено свободное посещение КПЗ для доставки нарушителей.</li>
+      <li>R-SP|CT в звании CPL обязуется повыситься до SGT и пройти обучение в течение 7 дней.</li>
+    </ol>`
+  },
+  ethics: {
+    title: 'Этика Ударного клона',
+    body: `<p>Этика Ударного клона играет ключевую роль в обеспечении законности и защиты прав существ.</p>
+    <h4>Основные пункты:</h4>
+    <ol>
+      <li><b>Независимость и объективность</b>: Действовать независимо от внешних влияний.</li>
+      <li><b>Соблюдение законности</b>: Строго следовать Уставу и приказам.</li>
+      <li><b>Профессионализм</b>: Постоянно совершенствовать навыки.</li>
+      <li><b>Уважение</b>: Уважать любого члена формирования, вне зависимости от нарушения.</li>
+    </ol>`
+  }
+};
 
 let db = loadDb();
 let currentView = 'home';
@@ -157,14 +195,22 @@ const VIEWS = {
             <dt>Позывной</dt><dd>${user.callsign}</dd>
             <dt>Роль</dt><dd>${roleByKey(user.role).title}</dd>
           </dl></article>
-          <article class="card"><h3>Полезные ссылки</h3>
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
-              ${EXTERNAL_LINKS.map(link => `<a href="${link.url}" target="_blank" class="btn ghost" style="text-align: left; padding: 10px 20px;">🔗 ${link.title}</a>`).join('')}
-            </div>
+          <article class="card"><h3>Быстрый доступ</h3>
+            <p>Вся информация из Google Docs теперь встроена ниже. Ссылка на Таблицу Состава УК (внешняя): <br><br> <a href="https://docs.google.com/spreadsheets/d/1yFM2jvgQBz7SfKeudbbXErFdQx9J6ZhAxbVudufKg0U/edit?gid=1466119767#gid=1466119767" target="_blank" class="btn ghost">📊 Таблица состава</a></p>
           </article>
         </div>
       </section>
       <section class="shell section">
+        <div class="section-heading"><h2>Обучение и регламенты</h2></div>
+        <div class="content-grid">
+          <article class="card content-card"><h3>${CONTENT_BLOCKS.upgrade_system.title}</h3><div>${CONTENT_BLOCKS.upgrade_system.body}</div></article>
+          <article class="card content-card"><h3>${CONTENT_BLOCKS.legal_block.title}</h3><div>${CONTENT_BLOCKS.legal_block.body}</div></article>
+          <article class="card content-card"><h3>${CONTENT_BLOCKS.recruit_regulations.title}</h3><div>${CONTENT_BLOCKS.recruit_regulations.body}</div></article>
+          <article class="card content-card"><h3>${CONTENT_BLOCKS.ethics.title}</h3><div>${CONTENT_BLOCKS.ethics.body}</div></article>
+        </div>
+      </section>
+      <section class="shell section">
+        <div class="section-heading"><h2>Служебная информация</h2></div>
         <div class="content-grid">
           <article class="card content-card"><h3>Иерархия</h3><p>${db.blocks.hierarchy.body.replaceAll('\n', '<br>')}</p></article>
           <article class="card content-card"><h3>Медали</h3><p>${db.blocks.medals.body.replaceAll('\n', '<br>')}</p></article>
