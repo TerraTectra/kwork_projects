@@ -10,7 +10,7 @@ const ROLES = [
 
 const STORAGE_KEY = 'ror_sp_portal_db_v1.1.5';
 const SESSION_KEY = 'ror_sp_session_v1.1.5';
-const $ = (selector) => document.querySelector(selector);
+const $ = (selector, parent = document) => parent.querySelector(selector);
 const roleByKey = (key) => ROLES.find((role) => role.key === key) || ROLES[0];
 
 // ===== PERSISTENT STORAGE SYSTEM =====
@@ -219,7 +219,10 @@ function renderNav() {
   }
   
   nav.innerHTML = html;
+  $('#profileBtn').hidden = !user;
+  $('#profileBtn').onclick = () => $('#profileEditModal').showModal();
   $('#logoutBtn').hidden = !user;
+  $('#closeProfileModal').onclick = () => $('#profileEditModal').close();
 }
 
 const VIEWS = {
@@ -446,6 +449,28 @@ $('#logoutBtn').onclick = () => {
   switchView('home'); 
 };
 
+$('#profileEditForm').onsubmit = (e) => {
+  e.preventDefault();
+  const user = currentUser();
+  if (!user) return alert('Ошибка: пользователь не найден');
+  
+  const data = new FormData(e.target);
+  const newNickname = data.get('nickname');
+  const newCallsign = data.get('callsign');
+  const newPassword = data.get('password');
+  
+  if (!newNickname || !newCallsign) return alert('Заполните все обязательные поля');
+  
+  user.nickname = newNickname;
+  user.callsign = newCallsign;
+  if (newPassword) user.password = newPassword;
+  
+  saveDb();
+  $('#profileEditModal').close();
+  render();
+  alert('Профиль успешно обновлен!');
+};
+
 $('#resetDemo').onclick = () => { 
   if (confirm('Удалить все данные?')) { 
     localStorage.removeItem(STORAGE_KEY);
@@ -458,4 +483,10 @@ $('#resetDemo').onclick = () => {
 // Инициализация при загрузке страницы
 window.addEventListener('load', () => {
   render();
+  // Заполняем форму редактирования текущими данными
+  const user = currentUser();
+  if (user && $('#profileEditForm')) {
+    $('[name="nickname"]', $('#profileEditModal')).value = user.nickname;
+    $('[name="callsign"]', $('#profileEditModal')).value = user.callsign;
+  }
 });

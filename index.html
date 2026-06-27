@@ -19,6 +19,7 @@
       <!-- Навигация будет генерироваться динамически в app.js -->
     </nav>
     <div id="headerAuth">
+      <button class="btn ghost" id="profileBtn" type="button" hidden>Профиль</button>
       <button class="btn ghost" id="logoutBtn" type="button" hidden>Выйти</button>
     </div>
   </header>
@@ -59,8 +60,28 @@
     </div>
   </dialog>
 
+  <dialog class="steam-modal" id="profileEditModal">
+    <div class="modal-card">
+      <button class="close" id="closeProfileModal" aria-label="Закрыть">×</button>
+      <p class="eyebrow">Профиль</p>
+      <h2>Редактирование профиля</h2>
+      <form id="profileEditForm" style="display:grid; gap:16px;">
+        <label>Ник Steam
+          <input name="nickname" placeholder="Griffon / Black / Masalini" required>
+        </label>
+        <label>Discord / позывной
+          <input name="callsign" placeholder="CT | R - SP | Позывной" required>
+        </label>
+        <label>Новый пароль (оставить пустым, чтобы не менять)
+          <input type="password" name="password" placeholder="••••••••">
+        </label>
+        <button class="btn primary" type="submit">Сохранить изменения</button>
+      </form>
+    </div>
+  </dialog>
+
   <footer class="shell footer">
-    <p>CT Legion · Rise of Republic · v1.1.0 SPA</p>
+    <p>CT Legion · Rise of Republic · v1.1.5 SPA</p>
     <button class="link-button" id="resetDemo" type="button">Сбросить данные</button>
   </footer>
 
