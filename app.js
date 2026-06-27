@@ -8,10 +8,79 @@ const ROLES = [
   { key: 'site_admin', title: 'Админ сайта', canEdit: true, canAssign: true }
 ];
 
-const STORAGE_KEY = 'ror_sp_portal_db_v1.1.4';
+const STORAGE_KEY = 'ror_sp_portal_db_v1.1.5';
+const SESSION_KEY = 'ror_sp_session_v1.1.5';
 const $ = (selector) => document.querySelector(selector);
 const roleByKey = (key) => ROLES.find((role) => role.key === key) || ROLES[0];
 
+// ===== PERSISTENT STORAGE SYSTEM =====
+class PersistentStorage {
+  static setSession(userId) {
+    // Сохраняем в localStorage
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ userId, timestamp: Date.now() }));
+    // Также сохраняем в sessionStorage для дополнительной надежности
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ userId, timestamp: Date.now() }));
+    // Сохраняем в cookie (на 30 дней)
+    this.setCookie('session_user_id', userId, 30);
+  }
+
+  static getSession() {
+    // Проверяем localStorage
+    let session = localStorage.getItem(SESSION_KEY);
+    if (session) {
+      try {
+        const data = JSON.parse(session);
+        return data.userId;
+      } catch (e) {}
+    }
+    
+    // Проверяем sessionStorage
+    session = sessionStorage.getItem(SESSION_KEY);
+    if (session) {
+      try {
+        const data = JSON.parse(session);
+        return data.userId;
+      } catch (e) {}
+    }
+    
+    // Проверяем cookie
+    const cookieUserId = this.getCookie('session_user_id');
+    if (cookieUserId) return cookieUserId;
+    
+    return null;
+  }
+
+  static clearSession() {
+    localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
+    this.deleteCookie('session_user_id');
+  }
+
+  static setCookie(name, value, days = 30) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expires = "expires=" + date.toUTCString();
+    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+  }
+
+  static getCookie(name) {
+    const nameEQ = name + "=";
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      let cookie = cookies[i].trim();
+      if (cookie.indexOf(nameEQ) === 0) {
+        return decodeURIComponent(cookie.substring(nameEQ.length));
+      }
+    }
+    return null;
+  }
+
+  static deleteCookie(name) {
+    this.setCookie(name, "", -1);
+  }
+}
+
+// ===== DATABASE SYSTEM =====
 const DECREES_DATA = [
   { id: 1, title: '📵 Постановление №1 — «Рация УК»', body: 'Каждый боец Ударного Взвода обязан во время пребывания на ОВО/ВО находиться в голосовом канале «Рация УК» в ЗКС либо на вспомогательной частоте «Рация УК» на комлинке.<br><br><b>«Связь»</b> — команда, при которой каждый боец обязан зайти на вспомогательную рацию УК. При отсутствии рации — предварительно создать её.<br><br>• Подключиться: F4 → Рация → УК|CT → Пароль: 1687.<br>• Создать: F4 → Рация → Создать канал → Тип: «Приватный», Название: УК|CT, Пароль: 1687.' },
   { id: 2, title: '💥 Постановление №2 — «Выдача штрафбата»', body: 'При многократных нарушениях со стороны бойца CT, неадекватном поведении или тяжких нарушениях Ударный клон имеет право написать заявку о выдаче штрафбата. Заявку одобряет CO-SP, командующий состав формирования и ВК.' },
@@ -94,12 +163,16 @@ let currentView = 'home';
 function loadDb() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return createInitialDb();
-  return JSON.parse(raw);
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed to parse DB:', e);
+    return createInitialDb();
+  }
 }
 
 function createInitialDb() {
   return {
-    currentUserId: null,
     users: [
       { id: 'admin-id', steamId: '76561198000000001', nickname: 'Владелец сайта', callsign: 'Site Admin', role: 'site_admin', password: 'admin' }
     ],
@@ -112,11 +185,16 @@ function createInitialDb() {
 }
 
 function saveDb() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  } catch (e) {
+    console.error('Failed to save DB:', e);
+  }
 }
 
 function currentUser() {
-  return db.users.find(u => u.id === db.currentUserId) || null;
+  const userId = PersistentStorage.getSession();
+  return db.users.find(u => u.id === userId) || null;
 }
 
 function switchView(view) {
@@ -344,8 +422,7 @@ $('#loginForm').onsubmit = (e) => {
   const data = new FormData(e.target);
   const user = db.users.find(u => u.steamId === data.get('steamId') && u.password === data.get('password'));
   if (user) {
-    db.currentUserId = user.id;
-    saveDb();
+    PersistentStorage.setSession(user.id);
     $('#steamModal').close();
     switchView('home');
   } else { alert('Неверные данные'); }
@@ -358,13 +435,27 @@ $('#steamForm').onsubmit = (e) => {
   if (db.users.find(u => u.steamId === steamId)) return alert('Steam ID занят');
   const newUser = { id: Date.now().toString(), steamId, nickname: data.get('nickname'), callsign: data.get('callsign'), password: data.get('password'), role: 'recruit' };
   db.users.push(newUser);
-  db.currentUserId = newUser.id;
   saveDb();
+  PersistentStorage.setSession(newUser.id);
   $('#steamModal').close();
   switchView('home');
 };
 
-$('#logoutBtn').onclick = () => { db.currentUserId = null; saveDb(); switchView('home'); };
-$('#resetDemo').onclick = () => { if (confirm('Удалить данные?')) { localStorage.removeItem(STORAGE_KEY); db = createInitialDb(); switchView('home'); } };
+$('#logoutBtn').onclick = () => { 
+  PersistentStorage.clearSession();
+  switchView('home'); 
+};
 
-render();
+$('#resetDemo').onclick = () => { 
+  if (confirm('Удалить все данные?')) { 
+    localStorage.removeItem(STORAGE_KEY);
+    PersistentStorage.clearSession();
+    db = createInitialDb(); 
+    switchView('home'); 
+  } 
+};
+
+// Инициализация при загрузке страницы
+window.addEventListener('load', () => {
+  render();
+});
