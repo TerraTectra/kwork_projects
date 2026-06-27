@@ -162,3 +162,13 @@ textarea { resize: vertical; min-height: 120px; }
   .header { flex-direction: column; text-align: center; gap: 16px; }
   .footer { flex-direction: column; text-align: center; }
 }
+
+/* Report Tabs and Content Stack Styling */
+.report-tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 10px; flex-wrap: wrap; }
+.report-tabs .tab-btn { background: transparent; border: 0; color: var(--muted); cursor: pointer; font-weight: 800; font-size: 1rem; padding: 5px 15px; border-radius: 8px; transition: all 0.2s; }
+.report-tabs .tab-btn.active { color: var(--accent); background: rgba(92, 200, 255, 0.1); }
+.content-stack { display: flex; flex-direction: column; gap: 30px; }
+.content-card h3 { color: var(--accent); margin-bottom: 15px; border-left: 4px solid var(--accent); padding-left: 15px; }
+.content-card h4 { color: #fff; margin: 20px 0 10px 0; }
+.content-card ul, .content-card ol { padding-left: 20px; margin-bottom: 15px; }
+.content-card li { margin-bottom: 8px; color: #ccc; }

@@ -8,7 +8,7 @@ const ROLES = [
   { key: 'site_admin', title: 'Админ сайта', canEdit: true, canAssign: true }
 ];
 
-const STORAGE_KEY = 'ror_sp_portal_db_v1.1.3';
+const STORAGE_KEY = 'ror_sp_portal_db_v1.1.4';
 const $ = (selector) => document.querySelector(selector);
 const roleByKey = (key) => ROLES.find((role) => role.key === key) || ROLES[0];
 
@@ -26,50 +26,66 @@ const DECREES_DATA = [
   { id: 11, title: '👁️ Постановление №11 — «О должностных обязанностях»', body: 'Регламентирует права и обязанности Куратора, Командира, Заместителя, Офицеров и Рядового состава Ударного Взвода.' }
 ];
 
-const CONTENT_BLOCKS = {
-  upgrade_system: {
-    title: 'Система повышения и поощрений',
-    body: `<h3>Инструкция</h3>
-    <p>Повышение происходит на основе проделанной работы, зафиксированной в рапортах и докладах. Для перехода на следующий ранг необходимо выполнить установленные нормы.</p>
-    <h4>Сержантский состав</h4>
+const FULL_CONTENT = {
+  upgrade: `
+    <h3>Система повышения и поощрений</h3>
+    <p><b>Инструкция:</b> Повышение происходит на основе проделанной работы, зафиксированной в рапортах и докладах. Для перехода на следующий ранг необходимо выполнить установленные нормы.</p>
+    <h4>Сержантский состав:</h4>
     <ul>
-      <li><b>R-SP → SOL-SP</b>: Пройти обучение, сдать регламенты, отстоять испытательный срок.</li>
-      <li><b>SOL-SP → SGT-SP</b>: Выполнение еженедельной нормы (5 докладов), участие в 3 операциях, отсутствие выговоров.</li>
+      <li><b>R-SP → SOL-SP:</b> Пройти обучение, сдать регламенты, отстоять испытательный срок.</li>
+      <li><b>SOL-SP → SGT-SP:</b> Выполнение еженедельной нормы (5 докладов), участие в 3 операциях, отсутствие выговоров.</li>
+      <li><b>SGT-SP → SSGT-SP:</b> 10 докладов, 5 операций, 1 рекомендация от OFC-SP+.</li>
     </ul>
-    <h4>Поощрения</h4>
-    <p>За активную службу, предотвращение крупных нарушений и помощь командованию бойцы могут получить внеочередное звание или медали.</p>`
-  },
-  legal_block: {
-    title: 'Нормативно-Правовой Блок ВАР',
-    body: `<h4>🔴 Золотые правила (ЗП)</h4>
-    <p>1. Приказ командира — закон для подчиненного.<br>2. Ударный клон — образец дисциплины.<br>3. Оружие применяется только в случае крайней необходимости.</p>
-    <h4>⚪ Воинский этикет (ВЭ)</h4>
-    <p>Соблюдение субординации, вежливое обращение к старшим по званию и гражданским лицам. Обращение только по званию или "Сэр/Мэм".</p>
-    <h4>🔵 Регламент ношения оружия (РНО)</h4>
-    <p>Оружие должно быть на предохранителе в мирное время. Запрещено бесцельное размахивание или стрельба в воздух.</p>`
-  },
-  recruit_regulations: {
-    title: 'Регламент для рекрута',
-    body: `<p>Свод правил для новоприбывших бойцов:</p>
+    <h4>Уоррент-офицерский состав:</h4>
+    <ul>
+      <li><b>SSGT-SP → WO-SP:</b> 15 докладов, 7 операций, прохождение офицерского теста.</li>
+    </ul>
+    <h4>Поощрения:</h4>
+    <p>За активную службу, предотвращение крупных нарушений и помощь командованию бойцы могут получить внеочередное звание или медали. Медали дают бонусы к репутации и приоритет при назначении на должности.</p>`,
+  legal: `
+    <h3>Нормативно-Правовой Блок ВАР</h3>
+    <h4>🔴 Золотые правила (ЗП):</h4>
+    <ol>
+      <li>Приказ командира — закон для подчиненного.</li>
+      <li>Ударный клон — образец дисциплины и выправки.</li>
+      <li>Оружие применяется только в случае крайней необходимости или по приказу.</li>
+      <li>Запрещено обсуждать приказы в присутствии посторонних.</li>
+    </ol>
+    <h4>⚪ Воинский этикет (ВЭ):</h4>
+    <p>Соблюдение субординации, вежливое обращение к старшим по званию и гражданским лицам. Обращение только по званию или "Сэр/Мэм". Приветствие старшего состава обязательно.</p>
+    <h4>🔵 Регламент ношения оружия (РНО):</h4>
+    <p>Оружие должно быть на предохранителе в мирное время. Запрещено бесцельное размахивание или стрельба в воздух. В жилых блоках оружие должно быть зачехлено.</p>
+    <h4>🟤 Постовая служба (ПС):</h4>
+    <p>Боец на посту обязан быть бдительным, не отвлекаться на посторонние разговоры и докладывать о ситуации каждые 10-15 минут.</p>`,
+  recruit: `
+    <h3>Регламент для рекрута</h3>
+    <p>Свод правил для новоприбывших бойцов:</p>
     <ol>
       <li>Разрешено предотвращать нарушения — заломать руки и положить бойца на пол, после вызвать гвардию.</li>
       <li>Разрешено носить форму УК только со 2-го этапа обучения на SP.</li>
       <li>Запрещено носить вооружение в ЗК (Примечание: Разрешается ношение второстепенного вооружения).</li>
-      <li>Запрещено свободное посещение КПЗ для доставки нарушителей.</li>
+      <li>Запрещено свободное посещение КПЗ для доставки нарушителей даже при предварительном оповещении КГ.</li>
       <li>R-SP|CT в звании CPL обязуется повыситься до SGT и пройти обучение в течение 7 дней.</li>
-    </ol>`
-  },
-  ethics: {
-    title: 'Этика Ударного клона',
-    body: `<p>Этика Ударного клона играет ключевую роль в обеспечении законности и защиты прав существ.</p>
-    <h4>Основные пункты:</h4>
+      <li>R-SP|CT имеет право присутствовать и наблюдать за задержаниями, оборонять строй и участвовать в слежке.</li>
+    </ol>`,
+  ethics: `
+    <h3>Этика Ударного клона</h3>
+    <p>Этика Ударного клона играет ключевую роль в обеспечении законности и защиты прав существ в рамках процессов.</p>
     <ol>
-      <li><b>Независимость и объективность</b>: Действовать независимо от внешних влияний.</li>
-      <li><b>Соблюдение законности</b>: Строго следовать Уставу и приказам.</li>
-      <li><b>Профессионализм</b>: Постоянно совершенствовать навыки.</li>
-      <li><b>Уважение</b>: Уважать любого члена формирования, вне зависимости от нарушения.</li>
+      <li><b>Независимость и объективность:</b> Действовать независимо от внешних влияний.</li>
+      <li><b>Соблюдение законности:</b> Соблюдать устав и иные документы, руководствоваться ими.</li>
+      <li><b>Профессионализм:</b> Обладать высоким уровнем знаний и навыков, постоянно совершенствоваться.</li>
+      <li><b>Уважение:</b> Уважать любого члена формирования, вне зависимости от степени нарушения. Способствовать пониманию клоном своего проступка.</li>
+    </ol>`,
+  reprimands: `
+    <h3>Система выговоров УК</h3>
+    <ol>
+      <li>Выговоры подразделяются на: "Устный" и "Письменный".</li>
+      <li>2 устных = 1 письменному.</li>
+      <li>При получении 3-ех письменных, боец исключается из взвода.</li>
+      <li>Право на выдачу любых выговоров имеют OFC-SP+.</li>
+      <li>Снятие выговоров происходит через DEP-SP+, либо через канал 《🏅》поощрения.</li>
     </ol>`
-  }
 };
 
 let db = loadDb();
@@ -117,6 +133,7 @@ function renderNav() {
   
   if (user) {
     html += `<a href="javascript:void(0)" class="nav-link ${currentView === 'database' ? 'active' : ''}" onclick="switchView('database')">База</a>`;
+    html += `<a href="javascript:void(0)" class="nav-link ${currentView === 'reports' ? 'active' : ''}" onclick="switchView('reports')">Рапорты</a>`;
     const role = roleByKey(user.role);
     if (role.canAssign) {
       html += `<a href="javascript:void(0)" class="nav-link ${currentView === 'command' ? 'active' : ''}" onclick="switchView('command')">Кабинет КМД</a>`;
@@ -130,13 +147,12 @@ function renderNav() {
 const VIEWS = {
   home: () => {
     const user = currentUser();
-    const role = user ? roleByKey(user.role) : null;
     return `
       <section class="hero shell">
         <div class="hero-copy">
           <p class="eyebrow">Закрытый портал · CT Legion</p>
           <h1>Рота ударных клонов</h1>
-          <p class="lead">${user ? `Профиль <b>${user.nickname}</b> подключён. Роль: <b>${role.title}</b>.` : 'Для неавторизованного бойца открыт только путь новичка и общие постановления. Зарегистрируйся через Steam, чтобы получить личный кабинет и доступ по роли.'}</p>
+          <p class="lead">${user ? `Профиль <b>${user.nickname}</b> подключён. Добро пожаловать на службу.` : 'Для неавторизованного бойца открыт только путь новичка. Зарегистрируйся через Steam, чтобы получить личный кабинет и доступ к базе.'}</p>
           <div class="hero-actions">
             ${user ? `<button class="btn primary" onclick="switchView('database')">Перейти в Базу</button>` : `
               <button class="btn primary" id="openLoginBtn">Войти в профиль</button>
@@ -149,94 +165,137 @@ const VIEWS = {
           <p class="eyebrow">Статус</p>
           <h2>${user ? user.nickname : 'Гость'}</h2>
           <p>${user ? user.callsign : 'Доступ ограничен'}</p>
-          ${user ? `<p><b>${role.title}</b></p>` : ''}
+          ${user ? `<p><b>${roleByKey(user.role).title}</b></p>` : ''}
         </aside>
       </section>
       <section class="shell section">
-        <div class="section-heading">
-          <p class="eyebrow">Открытый раздел</p>
-          <h2>Путь новичка</h2>
-        </div>
+        <div class="section-heading"><h2>Путь новичка</h2></div>
         <div class="path-grid">
-          <article class="card step"><span>01</span><h3>Познакомься с взводом</h3><p>Ударный взвод CT поддерживает порядок, дисциплину и безопасность корпуса на сервере Rise of Republic.</p></article>
-          <article class="card step"><span>02</span><h3>Изучи базовые каналы</h3><p>Следи за объявлениями, общайся в чате УК, рапорты пиши в соответствующий канал.</p></article>
-          <article class="card step"><span>03</span><h3>Подготовь рацию</h3><p>Рация УК: F4 → Рация → УК|CT. Пароль: 1687. Если канала нет — создай приватный.</p></article>
-          <article class="card step"><span>04</span><h3>Зарегистрируйся</h3><p>Нажми регистрацию через Steam. Данные сохраняются в браузере как локальная база.</p></article>
+          <article class="card step"><span>01</span><h3>Познакомься</h3><p>Ударный взвод CT поддерживает порядок и дисциплину на сервере Rise of Republic.</p></article>
+          <article class="card step"><span>02</span><h3>Рация</h3><p>F4 → Рация → УК|CT. Пароль: 1687.</p></article>
+          <article class="card step"><span>03</span><h3>Регистрация</h3><p>Создай профиль, чтобы видеть регламенты и писать рапорты.</p></article>
         </div>
       </section>`;
   },
   decrees: () => `
     <section class="shell section">
       <div class="section-heading">
-        <p class="eyebrow">Правила и нормы</p>
-        <h2>Постановления Ударного взвода</h2>
-        <p>Обязательны к выполнению каждым бойцом Ударного Взвода.</p>
-        <div style="margin-top: 20px;">
-          <a href="https://sites.google.com/view/riseoftherepublicdiscovery/устав-вар?authuser=0" target="_blank" class="btn secondary">📜 Устав ВАР (Внешняя ссылка)</a>
-        </div>
+        <h2>Постановления</h2>
+        <a href="https://sites.google.com/view/riseoftherepublicdiscovery/устав-вар?authuser=0" target="_blank" class="btn secondary" style="margin-top:10px">📜 Устав ВАР (Внешняя ссылка)</a>
       </div>
       <div class="decree-list">
         ${DECREES_DATA.map(d => `<article class="decree"><h3>${d.title}</h3><p>${d.body}</p></article>`).join('')}
       </div>
     </section>`,
-  database: () => {
-    const user = currentUser();
-    if (!user) return VIEWS.home();
-    return `
-      <section class="shell section">
-        <div class="section-heading">
-          <p class="eyebrow">Закрытые материалы</p>
-          <h2>База данных и ресурсы</h2>
-        </div>
-        <div class="db-grid">
-          <article class="card"><h3>Ваш профиль</h3><dl>
-            <dt>Steam ID</dt><dd>${user.steamId}</dd>
-            <dt>Ник</dt><dd>${user.nickname}</dd>
-            <dt>Позывной</dt><dd>${user.callsign}</dd>
-            <dt>Роль</dt><dd>${roleByKey(user.role).title}</dd>
-          </dl></article>
-          <article class="card"><h3>Быстрый доступ</h3>
-            <p>Вся информация из Google Docs теперь встроена ниже. Ссылка на Таблицу Состава УК (внешняя): <br><br> <a href="https://docs.google.com/spreadsheets/d/1yFM2jvgQBz7SfKeudbbXErFdQx9J6ZhAxbVudufKg0U/edit?gid=1466119767#gid=1466119767" target="_blank" class="btn ghost">📊 Таблица состава</a></p>
-          </article>
-        </div>
-      </section>
-      <section class="shell section">
-        <div class="section-heading"><h2>Обучение и регламенты</h2></div>
-        <div class="content-grid">
-          <article class="card content-card"><h3>${CONTENT_BLOCKS.upgrade_system.title}</h3><div>${CONTENT_BLOCKS.upgrade_system.body}</div></article>
-          <article class="card content-card"><h3>${CONTENT_BLOCKS.legal_block.title}</h3><div>${CONTENT_BLOCKS.legal_block.body}</div></article>
-          <article class="card content-card"><h3>${CONTENT_BLOCKS.recruit_regulations.title}</h3><div>${CONTENT_BLOCKS.recruit_regulations.body}</div></article>
-          <article class="card content-card"><h3>${CONTENT_BLOCKS.ethics.title}</h3><div>${CONTENT_BLOCKS.ethics.body}</div></article>
-        </div>
-      </section>
-      <section class="shell section">
-        <div class="section-heading"><h2>Служебная информация</h2></div>
-        <div class="content-grid">
-          <article class="card content-card"><h3>Иерархия</h3><p>${db.blocks.hierarchy.body.replaceAll('\n', '<br>')}</p></article>
-          <article class="card content-card"><h3>Медали</h3><p>${db.blocks.medals.body.replaceAll('\n', '<br>')}</p></article>
-          <article class="card content-card"><h3>Формы</h3><p>${db.blocks.forms.body.replaceAll('\n', '<br>')}</p></article>
-        </div>
-      </section>`;
+  database: () => `
+    <section class="shell section">
+      <div class="section-heading"><h2>База данных</h2></div>
+      <div class="content-stack">
+        <article class="card content-card">${FULL_CONTENT.upgrade}</article>
+        <article class="card content-card">${FULL_CONTENT.legal}</article>
+        <article class="card content-card">${FULL_CONTENT.recruit}</article>
+        <article class="card content-card">${FULL_CONTENT.ethics}</article>
+        <article class="card content-card">${FULL_CONTENT.reprimands}</article>
+        <article class="card content-card"><h3>Иерархия</h3><p>${db.blocks.hierarchy.body.replaceAll('\n', '<br>')}</p></article>
+        <article class="card content-card"><h3>Медали</h3><p>${db.blocks.medals.body.replaceAll('\n', '<br>')}</p></article>
+        <article class="card content-card"><h3>Формы</h3><p>${db.blocks.forms.body.replaceAll('\n', '<br>')}</p></article>
+        <article class="card content-card"><h3>Внешние ресурсы</h3><p><a href="https://docs.google.com/spreadsheets/d/1yFM2jvgQBz7SfKeudbbXErFdQx9J6ZhAxbVudufKg0U/edit?gid=1466119767#gid=1466119767" target="_blank" class="btn ghost">📊 Таблица состава УК</a></p></article>
+      </div>
+    </section>`,
+  reports: () => `
+    <section class="shell section">
+      <div class="section-heading"><h2>Генератор рапортов</h2></div>
+      <div class="report-tabs">
+        <button class="tab-btn active" onclick="switchReportTab('event')">Событие</button>
+        <button class="tab-btn" onclick="switchReportTab('punish')">Наказание</button>
+        <button class="tab-btn" onclick="switchReportTab('wanted')">Розыск</button>
+        <button class="tab-btn" onclick="switchReportTab('reprimand')">Выговор УК</button>
+      </div>
+      <div id="reportFormContainer" class="card" style="margin-top:20px; padding:20px;">
+        <!-- Динамическая форма -->
+      </div>
+      <div id="reportOutput" class="card" style="margin-top:20px; padding:20px; display:none; background: #1a1a1a; border: 1px solid #333;">
+        <h4 style="margin-bottom:10px">Результат (скопировано в буфер):</h4>
+        <pre id="reportPre" style="white-space: pre-wrap; font-family: monospace; color: #00ff00;"></pre>
+      </div>
+    </section>`,
+  command: () => `
+    <section class="shell section">
+      <div class="section-heading"><h2>Управление составом</h2></div>
+      <div id="usersList"></div>
+    </section>`
+};
+
+// Report Generator Logic
+let currentReportTab = 'event';
+const REPORT_TEMPLATES = {
+  event: {
+    title: 'Рапорт об участии в событии',
+    fields: [
+      { id: 'num', label: 'Номер рапорта', type: 'number', placeholder: 'Напр. 1' },
+      { id: 'event', label: 'В каком событии принимали участие', type: 'text' }
+    ],
+    gen: (d, user) => `Рапорт №${d.num}\n[1] @${user.nickname}\n[2] @.\n[3] ${d.event}\n[4]`
   },
-  command: () => {
-    const user = currentUser();
-    const role = user ? roleByKey(user.role) : null;
-    if (!role || !role.canAssign) return VIEWS.home();
-    return `
-      <section class="shell section">
-        <div class="section-heading">
-          <p class="eyebrow">Кабинет КМД</p>
-          <h2>Управление составом</h2>
-        </div>
-        <div class="command-grid" style="grid-template-columns: 1fr;">
-          <article class="card">
-            <div class="card-title"><h3>Список пользователей и выдача ролей</h3></div>
-            <div id="usersList"></div>
-          </article>
-        </div>
-      </section>`;
+  punish: {
+    title: 'Формуляр дела (ДВ/ДН/СКТ)',
+    fields: [
+      { id: 'num', label: 'Номер дела', type: 'number' },
+      { id: 'violator', label: 'IDN | Name (Нарушителя)', type: 'text' },
+      { id: 'rules', label: 'Нарушенные пункты Устава', type: 'text' },
+      { id: 'punish', label: 'Какое наказание выдано', type: 'text' },
+      { id: 'proof', label: 'Доказательства (ссылки)', type: 'text' }
+    ],
+    gen: (d, user) => `Дело №${d.num}\n[1] ${user.callsign} | ${user.nickname}\n[2] ${d.violator}\n[3] ${d.rules}\n[4] ${d.punish}\n[5] ${d.proof}`
+  },
+  wanted: {
+    title: 'Подача в розыск',
+    fields: [
+      { id: 'target', label: 'IDN | Rank | Name (Разыскиваемого)', type: 'text' },
+      { id: 'rules', label: 'Нарушенные пункты', type: 'text' },
+      { id: 'proof', label: 'Доказательства', type: 'text' }
+    ],
+    gen: (d, user) => `[1] ${user.callsign} | ${user.nickname}\n[2] ${d.target}\n[3] ${d.rules}\n[4] @[👮] Ударный Клон\n[5] ${d.proof}`
+  },
+  reprimand: {
+    title: 'Выдача выговора УК',
+    fields: [
+      { id: 'target', label: 'Кого наказываем (Пинг/Ник)', type: 'text' },
+      { id: 'type', label: 'Тип (Устный/Письменный)', type: 'text' },
+      { id: 'reason', label: 'Причина', type: 'text' }
+    ],
+    gen: (d, user) => `[1] @${user.nickname}\n[2] ${d.target}\n[3] ${d.type}\n[4] ${d.reason}\n[5] @[🗒️] Интендант УК`
   }
 };
+
+function switchReportTab(tab) {
+  currentReportTab = tab;
+  document.querySelectorAll('.report-tabs .tab-btn').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase().includes(tab === 'event' ? 'событие' : tab === 'punish' ? 'наказание' : tab === 'wanted' ? 'розыск' : 'выговор')));
+  renderReportForm();
+}
+
+function renderReportForm() {
+  const container = $('#reportFormContainer');
+  if (!container) return;
+  const tpl = REPORT_TEMPLATES[currentReportTab];
+  let html = `<h3>${tpl.title}</h3><form id="genForm" style="display:grid; gap:15px; margin-top:15px;">`;
+  tpl.fields.forEach(f => {
+    html += `<div><label>${f.label}</label><input type="${f.type}" id="f_${f.id}" required style="width:100%; padding:8px; background:#222; border:1px solid #444; color:white; border-radius:4px;"></div>`;
+  });
+  html += `<button type="submit" class="btn primary">Сгенерировать и скопировать</button></form>`;
+  container.innerHTML = html;
+  
+  $('#genForm').onsubmit = (e) => {
+    e.preventDefault();
+    const data = {};
+    tpl.fields.forEach(f => data[f.id] = $(`#f_${f.id}`).value);
+    const result = "```\n" + tpl.gen(data, currentUser()) + "\n```";
+    $('#reportPre').textContent = result;
+    $('#reportOutput').style.display = 'block';
+    navigator.clipboard.writeText(result);
+    alert('Скопировано в буфер обмена!');
+  };
+}
 
 function render() {
   renderNav();
@@ -247,20 +306,17 @@ function render() {
     $('#openLoginBtn').onclick = () => { switchTab('login'); $('#steamModal').showModal(); };
     $('#openRegisterBtn').onclick = () => { switchTab('register'); $('#steamModal').showModal(); };
   }
-  
-  if (currentView === 'command') {
-    renderUsersList();
-  }
+  if (currentView === 'reports') renderReportForm();
+  if (currentView === 'command') renderUsersList();
 }
 
 function renderUsersList() {
   const container = $('#usersList');
   if (!container) return;
-  const canAssign = roleByKey(currentUser().role).canAssign;
   container.innerHTML = db.users.map(u => `
-    <div class="user-row">
-      <div><b>${u.nickname}</b><br><small>${u.steamId}</small></div>
-      <select onchange="updateUserRole('${u.id}', this.value)" ${canAssign ? '' : 'disabled'}>
+    <div class="user-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #333;">
+      <div><b>${u.nickname}</b> (${u.callsign})<br><small>${u.steamId}</small></div>
+      <select onchange="updateUserRole('${u.id}', this.value)">
         ${ROLES.map(r => `<option value="${r.key}" ${u.role === r.key ? 'selected' : ''}>${r.title}</option>`).join('')}
       </select>
     </div>`).join('');
@@ -271,11 +327,10 @@ function updateUserRole(userId, newRole) {
   if (user) {
     user.role = newRole;
     saveDb();
-    alert(`Роль пользователя ${user.nickname} обновлена на ${roleByKey(newRole).title}`);
+    alert('Роль обновлена');
   }
 }
 
-// Auth logic
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `${tab}Tab`));
@@ -293,9 +348,7 @@ $('#loginForm').onsubmit = (e) => {
     saveDb();
     $('#steamModal').close();
     switchView('home');
-  } else {
-    alert('Неверные данные');
-  }
+  } else { alert('Неверные данные'); }
 };
 
 $('#steamForm').onsubmit = (e) => {
@@ -303,15 +356,7 @@ $('#steamForm').onsubmit = (e) => {
   const data = new FormData(e.target);
   const steamId = data.get('steamId');
   if (db.users.find(u => u.steamId === steamId)) return alert('Steam ID занят');
-  
-  const newUser = {
-    id: Date.now().toString(),
-    steamId,
-    nickname: data.get('nickname'),
-    callsign: data.get('callsign'),
-    password: data.get('password'),
-    role: 'recruit'
-  };
+  const newUser = { id: Date.now().toString(), steamId, nickname: data.get('nickname'), callsign: data.get('callsign'), password: data.get('password'), role: 'recruit' };
   db.users.push(newUser);
   db.currentUserId = newUser.id;
   saveDb();
@@ -319,18 +364,7 @@ $('#steamForm').onsubmit = (e) => {
   switchView('home');
 };
 
-$('#logoutBtn').onclick = () => {
-  db.currentUserId = null;
-  saveDb();
-  switchView('home');
-};
-
-$('#resetDemo').onclick = () => {
-  if (confirm('Удалить все данные?')) {
-    localStorage.removeItem(STORAGE_KEY);
-    db = createInitialDb();
-    switchView('home');
-  }
-};
+$('#logoutBtn').onclick = () => { db.currentUserId = null; saveDb(); switchView('home'); };
+$('#resetDemo').onclick = () => { if (confirm('Удалить данные?')) { localStorage.removeItem(STORAGE_KEY); db = createInitialDb(); switchView('home'); } };
 
 render();
