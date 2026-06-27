@@ -313,7 +313,7 @@ const REPORT_TEMPLATES = {
       { id: 'num', label: 'Номер рапорта', type: 'number', placeholder: 'Напр. 1' },
       { id: 'event', label: 'В каком событии принимали участие', type: 'text' }
     ],
-    gen: (d, user) => `Рапорт №${d.num}\n[1] @${user.nickname}\n[2] @.\n[3] ${d.event}\n[4]`
+    gen: (d, user) => `Рапорт №${d.num}\n[1] @\n[2] @.\n[3] ${d.event}\n[4]`
   },
   punish: {
     title: 'Формуляр дела (ДВ/ДН/СКТ)',
@@ -342,7 +342,7 @@ const REPORT_TEMPLATES = {
       { id: 'type', label: 'Тип (Устный/Письменный)', type: 'text' },
       { id: 'reason', label: 'Причина', type: 'text' }
     ],
-    gen: (d, user) => `[1] @${user.nickname}\n[2] ${d.target}\n[3] ${d.type}\n[4] ${d.reason}\n[5] @[🗒️] Интендант УК`
+    gen: (d, user) => `[1] @\n[2] ${d.target}\n[3] ${d.type}\n[4] ${d.reason}\n[5] @[🗒️] Интендант УК`
   }
 };
 
@@ -367,7 +367,7 @@ function renderReportForm() {
     e.preventDefault();
     const data = {};
     tpl.fields.forEach(f => data[f.id] = $(`#f_${f.id}`).value);
-    const result = "```\n" + tpl.gen(data, currentUser()) + "\n```";
+    const result = tpl.gen(data, currentUser());
     $('#reportPre').textContent = result;
     $('#reportOutput').style.display = 'block';
     navigator.clipboard.writeText(result);
