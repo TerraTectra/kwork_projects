@@ -1,4 +1,5 @@
 const ROLES = [
+  { key: 'guest', title: 'Гость', canEdit: false, canAssign: false },
   { key: 'recruit', title: 'Recruit SP', canEdit: false, canAssign: false },
   { key: 'soldier', title: 'SP (Ударный клон)', canEdit: false, canAssign: false },
   { key: 'officer', title: 'Officer SP', canEdit: false, canAssign: false },
@@ -8,24 +9,20 @@ const ROLES = [
   { key: 'site_admin', title: 'Админ сайта', canEdit: true, canAssign: true }
 ];
 
-const STORAGE_KEY = 'ror_sp_portal_db_v1.1.5';
-const SESSION_KEY = 'ror_sp_session_v1.1.5';
+const STORAGE_KEY = 'ror_sp_portal_db_v1.1.6';
+const SESSION_KEY = 'ror_sp_session_v1.1.6';
 const $ = (selector, parent = document) => parent.querySelector(selector);
 const roleByKey = (key) => ROLES.find((role) => role.key === key) || ROLES[0];
 
 // ===== PERSISTENT STORAGE SYSTEM =====
 class PersistentStorage {
   static setSession(userId) {
-    // Сохраняем в localStorage
     localStorage.setItem(SESSION_KEY, JSON.stringify({ userId, timestamp: Date.now() }));
-    // Также сохраняем в sessionStorage для дополнительной надежности
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({ userId, timestamp: Date.now() }));
-    // Сохраняем в cookie (на 30 дней)
     this.setCookie('session_user_id', userId, 30);
   }
 
   static getSession() {
-    // Проверяем localStorage
     let session = localStorage.getItem(SESSION_KEY);
     if (session) {
       try {
@@ -34,7 +31,6 @@ class PersistentStorage {
       } catch (e) {}
     }
     
-    // Проверяем sessionStorage
     session = sessionStorage.getItem(SESSION_KEY);
     if (session) {
       try {
@@ -43,7 +39,6 @@ class PersistentStorage {
       } catch (e) {}
     }
     
-    // Проверяем cookie
     const cookieUserId = this.getCookie('session_user_id');
     if (cookieUserId) return cookieUserId;
     
@@ -95,398 +90,371 @@ const DECREES_DATA = [
   { id: 11, title: '👁️ Постановление №11 — «О должностных обязанностях»', body: 'Регламентирует права и обязанности Куратора, Командира, Заместителя, Офицеров и Рядового состава Ударного Взвода.' }
 ];
 
-const FULL_CONTENT = {
-  upgrade: `
-    <h3>Система повышения и поощрений</h3>
-    <p><b>Инструкция:</b> Повышение происходит на основе проделанной работы, зафиксированной в рапортах и докладах. Для перехода на следующий ранг необходимо выполнить установленные нормы.</p>
-    <h4>Сержантский состав:</h4>
-    <ul>
-      <li><b>R-SP → SOL-SP:</b> Пройти обучение, сдать регламенты, отстоять испытательный срок.</li>
-      <li><b>SOL-SP → SGT-SP:</b> Выполнение еженедельной нормы (5 докладов), участие в 3 операциях, отсутствие выговоров.</li>
-      <li><b>SGT-SP → SSGT-SP:</b> 10 докладов, 5 операций, 1 рекомендация от OFC-SP+.</li>
-    </ul>
-    <h4>Уоррент-офицерский состав:</h4>
-    <ul>
-      <li><b>SSGT-SP → WO-SP:</b> 15 докладов, 7 операций, прохождение офицерского теста.</li>
-    </ul>
-    <h4>Поощрения:</h4>
-    <p>За активную службу, предотвращение крупных нарушений и помощь командованию бойцы могут получить внеочередное звание или медали. Медали дают бонусы к репутации и приоритет при назначении на должности.</p>`,
-  legal: `
-    <h3>Нормативно-Правовой Блок ВАР</h3>
-    <h4>🔴 Золотые правила (ЗП):</h4>
-    <ol>
-      <li>Приказ командира — закон для подчиненного.</li>
-      <li>Ударный клон — образец дисциплины и выправки.</li>
-      <li>Оружие применяется только в случае крайней необходимости или по приказу.</li>
-      <li>Запрещено обсуждать приказы в присутствии посторонних.</li>
-    </ol>
-    <h4>⚪ Воинский этикет (ВЭ):</h4>
-    <p>Соблюдение субординации, вежливое обращение к старшим по званию и гражданским лицам. Обращение только по званию или "Сэр/Мэм". Приветствие старшего состава обязательно.</p>
-    <h4>🔵 Регламент ношения оружия (РНО):</h4>
-    <p>Оружие должно быть на предохранителе в мирное время. Запрещено бесцельное размахивание или стрельба в воздух. В жилых блоках оружие должно быть зачехлено.</p>
-    <h4>🟤 Постовая служба (ПС):</h4>
-    <p>Боец на посту обязан быть бдительным, не отвлекаться на посторонние разговоры и докладывать о ситуации каждые 10-15 минут.</p>`,
-  recruit: `
-    <h3>Регламент для рекрута</h3>
-    <p>Свод правил для новоприбывших бойцов:</p>
-    <ol>
-      <li>Разрешено предотвращать нарушения — заломать руки и положить бойца на пол, после вызвать гвардию.</li>
-      <li>Разрешено носить форму УК только со 2-го этапа обучения на SP.</li>
-      <li>Запрещено носить вооружение в ЗК (Примечание: Разрешается ношение второстепенного вооружения).</li>
-      <li>Запрещено свободное посещение КПЗ для доставки нарушителей даже при предварительном оповещении КГ.</li>
-      <li>R-SP|CT в звании CPL обязуется повыситься до SGT и пройти обучение в течение 7 дней.</li>
-      <li>R-SP|CT имеет право присутствовать и наблюдать за задержаниями, оборонять строй и участвовать в слежке.</li>
-    </ol>`,
-  ethics: `
-    <h3>Этика Ударного клона</h3>
-    <p>Этика Ударного клона играет ключевую роль в обеспечении законности и защиты прав существ в рамках процессов.</p>
-    <ol>
-      <li><b>Независимость и объективность:</b> Действовать независимо от внешних влияний.</li>
-      <li><b>Соблюдение законности:</b> Соблюдать устав и иные документы, руководствоваться ими.</li>
-      <li><b>Профессионализм:</b> Обладать высоким уровнем знаний и навыков, постоянно совершенствоваться.</li>
-      <li><b>Уважение:</b> Уважать любого члена формирования, вне зависимости от степени нарушения. Способствовать пониманию клоном своего проступка.</li>
-    </ol>`,
-  reprimands: `
-    <h3>Система выговоров УК</h3>
-    <ol>
-      <li>Выговоры подразделяются на: "Устный" и "Письменный".</li>
-      <li>2 устных = 1 письменному.</li>
-      <li>При получении 3-ех письменных, боец исключается из взвода.</li>
-      <li>Право на выдачу любых выговоров имеют OFC-SP+.</li>
-      <li>Снятие выговоров происходит через DEP-SP+, либо через канал 《🏅》поощрения.</li>
-    </ol>`
-};
-
-let db = loadDb();
-let currentView = 'home';
-
-function loadDb() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return createInitialDb();
-  try {
-    return JSON.parse(raw);
-  } catch (e) {
-    console.error('Failed to parse DB:', e);
-    return createInitialDb();
-  }
-}
-
-function createInitialDb() {
-  return {
-    users: [
-      { id: 'admin-id', steamId: '76561198000000001', nickname: 'Владелец сайта', callsign: 'Site Admin', role: 'site_admin', password: 'admin' }
-    ],
-    blocks: {
-      hierarchy: { title: 'Иерархия', body: 'Куратор — без приписки\nКомандир УК — CO-SP | CT\nЗам. Командира УК — DEP-SP | CT\nОфицер УК — OFC-SP | CT\nСолдат УК — SOL-SP | CT\nРекрут УК — R-SP | CT' },
-      medals: { title: 'Медали', body: 'Высшая преданность делу, Щит Отечества, За мужество и честь, Ударный клон месяца, Оперативная служба, Верность долгу, Победитель преступности, За отличие в службе, Верность Уставу, Первоклассник, Защитник правопорядка.' },
-      forms: { title: 'Формы', body: 'SP: DC-15LE, Westar-M5, DP-23, DC-17, Dual DC-17, Clone Shield, термальная граната, крюк-кошка, парализатор, наручники, броня 300.\nMED-SP: Westar-M5, DC-17, Bacta Injector, Bacta Grenade, броня 125.\nPR-SP: DC-19LE, Westar-M5, DP-23, Dual DC-17, JT-12, броня 300.' }
-    }
-  };
-}
-
-function saveDb() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-  } catch (e) {
-    console.error('Failed to save DB:', e);
-  }
-}
-
-function currentUser() {
-  const userId = PersistentStorage.getSession();
-  return db.users.find(u => u.id === userId) || null;
-}
-
-function switchView(view) {
-  currentView = view;
-  render();
-  window.scrollTo(0, 0);
-}
-
-function renderNav() {
-  const user = currentUser();
-  const nav = $('#mainNav');
-  let html = `<a href="javascript:void(0)" class="nav-link ${currentView === 'home' ? 'active' : ''}" onclick="switchView('home')">Главная</a>`;
-  html += `<a href="javascript:void(0)" class="nav-link ${currentView === 'decrees' ? 'active' : ''}" onclick="switchView('decrees')">Постановления</a>`;
-  
-  if (user) {
-    html += `<a href="javascript:void(0)" class="nav-link ${currentView === 'database' ? 'active' : ''}" onclick="switchView('database')">База</a>`;
-    html += `<a href="javascript:void(0)" class="nav-link ${currentView === 'reports' ? 'active' : ''}" onclick="switchView('reports')">Рапорты</a>`;
-    const role = roleByKey(user.role);
-    if (role.canAssign) {
-      html += `<a href="javascript:void(0)" class="nav-link ${currentView === 'command' ? 'active' : ''}" onclick="switchView('command')">Кабинет КМД</a>`;
-    }
-  }
-  
-  nav.innerHTML = html;
-  $('#profileBtn').hidden = !user;
-  $('#profileBtn').onclick = () => $('#profileEditModal').showModal();
-  $('#logoutBtn').hidden = !user;
-  $('#closeProfileModal').onclick = () => $('#profileEditModal').close();
-}
-
-const VIEWS = {
-  home: () => {
-    const user = currentUser();
-    return `
-      <section class="hero shell">
-        <div class="hero-copy">
-          <p class="eyebrow">Закрытый портал · CT Legion</p>
-          <h1>Рота ударных клонов</h1>
-          <p class="lead">${user ? `Профиль <b>${user.nickname}</b> подключён. Добро пожаловать на службу.` : 'Для неавторизованного бойца открыт только путь новичка. Зарегистрируйся через Steam, чтобы получить личный кабинет и доступ к базе.'}</p>
-          <div class="hero-actions">
-            ${user ? `<button class="btn primary" onclick="switchView('database')">Перейти в Базу</button>` : `
-              <button class="btn primary" id="openLoginBtn">Войти в профиль</button>
-              <button class="btn secondary" id="openRegisterBtn">Регистрация</button>
-            `}
-          </div>
-        </div>
-        <aside class="status-card">
-          <span class="status-dot ${user ? 'online' : ''}"></span>
-          <p class="eyebrow">Статус</p>
-          <h2>${user ? user.nickname : 'Гость'}</h2>
-          <p>${user ? user.callsign : 'Доступ ограничен'}</p>
-          ${user ? `<p><b>${roleByKey(user.role).title}</b></p>` : ''}
-        </aside>
-      </section>
-      <section class="shell section">
-        <div class="section-heading"><h2>Путь новичка</h2></div>
-        <div class="path-grid">
-          <article class="card step"><span>01</span><h3>Познакомься</h3><p>Ударный взвод CT поддерживает порядок и дисциплину на сервере Rise of Republic.</p></article>
-          <article class="card step"><span>02</span><h3>Рация</h3><p>F4 → Рация → УК|CT. Пароль: 1687.</p></article>
-          <article class="card step"><span>03</span><h3>Регистрация</h3><p>Создай профиль, чтобы видеть регламенты и писать рапорты.</p></article>
-        </div>
-      </section>`;
+// ===== FULL CONTENT FOR BASE SECTION =====
+const BASE_SECTIONS = {
+  promotion: {
+    title: 'Система повышения и поощрений',
+    content: `
+      <h3>Система повышения и поощрений взвода Ударных клонов СТ</h3>
+      <p><b>Инструкция:</b></p>
+      <ol>
+        <li>Повышение в нашем взводе осуществляется по мере накопления определенного количества баллов или выполнения конкретных задач.</li>
+        <li>Баллы начисляются за участие в тренировках, ивентах, патрулирование и успешное выполнение боевых задач.</li>
+        <li>Рапорт о проделанной работе должен быть подан в соответствующий канал Discord до конца недели.</li>
+        <li>Решение о повышении принимает командный состав (OFC-SP+).</li>
+      </ol>
+      <p><b>Сержантский состав:</b></p>
+      <ul>
+        <li><b>Recruit SP → PVT-SP:</b> Прохождение КМБ, сдача устава и базовых регламентов.</li>
+        <li><b>PVT-SP → CPL-SP:</b> 15 баллов, участие в 3 патрулях, отсутствие выговоров.</li>
+        <li><b>CPL-SP → SGT-SP:</b> 25 баллов, проведение 2 тренировок для рекрутов, сдача экзамена на знание тактики.</li>
+        <li><b>SGT-SP → SSGT-SP:</b> 40 баллов, руководство группой в 2 операциях, рекомендация от OFC-SP.</li>
+      </ul>
+      <p><b>Уоррент-офицерский состав:</b></p>
+      <ul>
+        <li><b>SSGT-SP → WO-SP:</b> 60 баллов, сдача расширенного теста на знание законодательства ВАР, 2 недели в звании SSGT.</li>
+        <li><b>WO-SP → CWO-SP:</b> 80 баллов, безупречная служба, активное участие в жизни взвода, назначение приказом DEP-SP+.</li>
+      </ul>
+      <p><b>Поощрения:</b></p>
+      <ul>
+        <li><b>Медаль «За отвагу»:</b> Выдается за исключительное мужество в бою. Дает +10 баллов к повышению.</li>
+        <li><b>Благодарность в личное дело:</b> Выдается за инициативность. Дает +5 баллов.</li>
+        <li><b>Снятие устного выговора:</b> За активную работу в течение недели.</li>
+      </ul>
+    `
   },
-  decrees: () => `
-    <section class="shell section">
-      <div class="section-heading">
-        <h2>Постановления</h2>
-        <a href="https://sites.google.com/view/riseoftherepublicdiscovery/устав-вар?authuser=0" target="_blank" class="btn secondary" style="margin-top:10px">📜 Устав ВАР (Внешняя ссылка)</a>
-      </div>
-      <div class="decree-list">
-        ${DECREES_DATA.map(d => `<article class="decree"><h3>${d.title}</h3><p>${d.body}</p></article>`).join('')}
-      </div>
-    </section>`,
-  database: () => `
-    <section class="shell section">
-      <div class="section-heading"><h2>База данных</h2></div>
-      <div class="content-stack">
-        <article class="card content-card">${FULL_CONTENT.upgrade}</article>
-        <article class="card content-card">${FULL_CONTENT.legal}</article>
-        <article class="card content-card">${FULL_CONTENT.recruit}</article>
-        <article class="card content-card">${FULL_CONTENT.ethics}</article>
-        <article class="card content-card">${FULL_CONTENT.reprimands}</article>
-        <article class="card content-card"><h3>Иерархия</h3><p>${db.blocks.hierarchy.body.replaceAll('\n', '<br>')}</p></article>
-        <article class="card content-card"><h3>Медали</h3><p>${db.blocks.medals.body.replaceAll('\n', '<br>')}</p></article>
-        <article class="card content-card"><h3>Формы</h3><p>${db.blocks.forms.body.replaceAll('\n', '<br>')}</p></article>
-        <article class="card content-card"><h3>Внешние ресурсы</h3><p><a href="https://docs.google.com/spreadsheets/d/1yFM2jvgQBz7SfKeudbbXErFdQx9J6ZhAxbVudufKg0U/edit?gid=1466119767#gid=1466119767" target="_blank" class="btn ghost">📊 Таблица состава УК</a></p></article>
-      </div>
-    </section>`,
-  reports: () => `
-    <section class="shell section">
-      <div class="section-heading"><h2>Генератор рапортов</h2></div>
-      <div class="report-tabs">
-        <button class="tab-btn active" onclick="switchReportTab('event')">Событие</button>
-        <button class="tab-btn" onclick="switchReportTab('punish')">Наказание</button>
-        <button class="tab-btn" onclick="switchReportTab('wanted')">Розыск</button>
-        <button class="tab-btn" onclick="switchReportTab('reprimand')">Выговор УК</button>
-      </div>
-      <div id="reportFormContainer" class="card" style="margin-top:20px; padding:20px;">
-        <!-- Динамическая форма -->
-      </div>
-      <div id="reportOutput" class="card" style="margin-top:20px; padding:20px; display:none; background: #1a1a1a; border: 1px solid #333;">
-        <h4 style="margin-bottom:10px">Результат (скопировано в буфер):</h4>
-        <pre id="reportPre" style="white-space: pre-wrap; font-family: monospace; color: #00ff00;"></pre>
-      </div>
-    </section>`,
-  command: () => `
-    <section class="shell section">
-      <div class="section-heading"><h2>Управление составом</h2></div>
-      <div id="usersList"></div>
-    </section>`
+  legal: {
+    title: 'Нормативно-Правовой Блок ВАР',
+    content: `
+      <h3>Нормативно - Правовой Блок ВАР (с поправками от 21.03.2026)</h3>
+      <p><b>АББРЕВИАТУРА:</b></p>
+      <ul>
+        <li>ВАР — Великая Армия Республики</li>
+        <li>ЗП — Золотые Правила</li>
+        <li>ВЭ — Воинский Этикет</li>
+        <li>ППвС — Правила поведения в строю</li>
+        <li>РНО — Регламент ношения оружия</li>
+        <li>ОиПВЕВ — Обязанности и права всех единиц ВАР</li>
+        <li>ПС — Постовая служба</li>
+        <li>ПА — Правила арсенала</li>
+        <li>СВ — Свободное время</li>
+        <li>ППБнВО — Правила поведения бойца на военном объекте</li>
+        <li>ПВО — Правила военных объектов</li>
+        <li>ТБ — Техника безопасности</li>
+        <li>МсОД — Места с ограниченным допуском</li>
+      </ul>
+      <p><b>ЗОЛОТЫЕ ПРАВИЛА (ЗП):</b></p>
+      <ol>
+        <li>Приказ старшего по званию — закон. Необсуждаем, пока не выполнен.</li>
+        <li>Запрещено открывать огонь по своим.</li>
+        <li>Запрещено дезертирство и предательство.</li>
+        <li>Соблюдение субординации обязательно для всех.</li>
+      </ol>
+      <p><b>ВОИНСКИЙ ЭТИКЕТ (ВЭ):</b></p>
+      <ul>
+        <li>Обращение к старшему только на «Вы» и по званию.</li>
+        <li>Приветствие осуществляется воинским салютом.</li>
+        <li>Запрещено использование нецензурной лексики.</li>
+      </ul>
+      <p><b>Правила поведения в строю (ППвС):</b></p>
+      <ul>
+        <li>В строю запрещено: разговаривать, использовать рацию, выходить без разрешения, доставать оружие.</li>
+        <li>Опоздавший в строй должен доложить: «Сэр, [Звание] [Позывной] опоздал в строй. Разрешите встать?»</li>
+      </ul>
+      <p><b>Регламент ношения оружия (РНО):</b></p>
+      <ul>
+        <li>Оружие должно быть на предохранителе (за спиной/в кобуре), если нет прямой угрозы.</li>
+        <li>Использование спецсредств без причины карается выговором.</li>
+      </ul>
+      <p><b>Обязанности и права всех единиц ВАР:</b></p>
+      <ul>
+        <li><b>Обязанность:</b> Защита Республики, выполнение приказов, поддержание дисциплины.</li>
+        <li><b>Право:</b> На отдых, на получение снаряжения, на подачу рапорта.</li>
+      </ul>
+      <p><b>ПОРЯДОК ЗАДЕРЖАНИЯ НАРУШИТЕЛЯ:</b></p>
+      <ol>
+        <li>Потребовать прекратить противоправные действия.</li>
+        <li>В случае неподчинения — применить нелетальное оружие (шокер).</li>
+        <li>Зачитать права и доставить в карцер.</li>
+        <li>Составить рапорт о задержании.</li>
+      </ol>
+    `
+  },
+  recruit: {
+    title: 'Регламент для рекрута',
+    content: `
+      <h3>Регламент для рекрута Ударного взвода</h3>
+      <p><b>Свод правил для новоприбывших бойцов:</b></p>
+      <ol>
+        <li>Разрешено предотвращать нарушения - заломать руки и положить бойца на пол, после вызвать гвардию.</li>
+        <li>Разрешено носить форму УК только со 2-го этапа обучения на SP.</li>
+        <li>Запрещено носить вооружение в ЗК (Примечание: Разрешается ношение второстепенного вооружения).</li>
+        <li>Запрещено свободное посещение КПЗ для доставки нарушителей даже при предварительном оповещении Корусантской Гвардии.</li>
+        <li>R-SP|CT в звании CPL обязуется повыситься в звании до SGT и пройти обучение на специализацию Ударного Клона (SP) в течение 7 дней с момента поступления в отряд.</li>
+        <li>R-SP|CT имеет право присутствовать и наблюдать за задержаниями от полноценных единиц Ударного взвода, оборонять строй во время проведения агит. мероприятий, а также участвовать в слежке за проведением обучения.</li>
+      </ol>
+    `
+  },
+  ethics: {
+    title: 'Этика Ударного клона',
+    content: `
+      <h3>Этика Ударного клона</h3>
+      <p>Этика Ударного клона играет ключевую роль в обеспечении законности, справедливости и защите прав существ в рамках процессов, а также способствует повышению доверия общества к правоохранительным органам.</p>
+      <p><b>Командиром отряда были сформированы основные пункты этики:</b></p>
+      <h4>[1] Независимость и объективность</h4>
+      <p>Ударный клон должен действовать независимо от внешних влияний и обеспечивать объективность в ходе пресечения преступлений.</p>
+      <h4>[2] Соблюдение законности</h4>
+      <p>Ударный клон должен соблюдать устав и иные документы, руководствоваться ими при реализации своей деятельности.</p>
+      <h4>[3] Профессионализм</h4>
+      <p>Ударный клон должен обладать высоким уровнем профессиональных знаний и навыков, постоянно совершенствовать свою квалификацию и следовать этическим стандартам.</p>
+      <h4>[4] Уважение</h4>
+      <p>Ударный клон должен уважать любого члена формирования, вне зависимости от степени нарушения. Также способствовать наилучшему пониманию клона о своем проступке/преступлении путем предупреждений, разъяснений и иных методов взаимодействия с клоном.</p>
+    `
+  },
+  hierarchy: {
+    title: 'Иерархия и медали',
+    content: `
+      <h3>Иерархия Ударного взвода</h3>
+      <p><b>Рядовой состав:</b></p>
+      <ul>
+        <li>Recruit SP (R-SP) — Рекрут</li>
+        <li>Private SP (PVT-SP) — Рядовой</li>
+        <li>Corporal SP (CPL-SP) — Младший сержант</li>
+      </ul>
+      <p><b>Сержантский состав:</b></p>
+      <ul>
+        <li>Sergeant SP (SGT-SP) — Сержант</li>
+        <li>Staff Sergeant SP (SSGT-SP) — Старший сержант</li>
+      </ul>
+      <p><b>Офицерский состав:</b></p>
+      <ul>
+        <li>Officer SP (OFC-SP) — Офицер</li>
+        <li>Deputy Commander SP (DEP-SP) — Заместитель командира</li>
+        <li>Commander SP (CO-SP) — Командир взвода</li>
+        <li>Curator SP (CUR-SP) — Куратор</li>
+      </ul>
+      <h3>Медали Ударного корпуса</h3>
+      <ul>
+        <li>🎖️ Медаль «За отвагу» — За исключительное мужество в бою</li>
+        <li>🏅 Медаль «За верность» — За долгую и безупречную службу</li>
+        <li>⭐ Звезда «Боевая» — За участие в боевых операциях</li>
+        <li>📜 Грамота благодарности — За инициативность и добросовестность</li>
+      </ul>
+    `
+  }
 };
 
-// Report Generator Logic
-let currentReportTab = 'event';
+// ===== REPORT GENERATOR DATA =====
 const REPORT_TEMPLATES = {
   event: {
-    title: 'Рапорт об участии в событии',
-    fields: [
-      { id: 'num', label: 'Номер рапорта', type: 'number', placeholder: 'Напр. 1' },
-      { id: 'event', label: 'В каком событии принимали участие', type: 'text' }
-    ],
-    gen: (d, user) => `Рапорт №${d.num}\n[1] @\n[2] @.\n[3] ${d.event}\n[4]`
+    name: 'Обычный рапорт (Событие)',
+    template: `Рапорт №[NUMBER]
+[1] @
+[2] @
+[3] В каком событии Вы принимали участие: [EVENT]
+[4] [DESCRIPTION]`
   },
-  punish: {
-    title: 'Формуляр дела (ДВ/ДН/СКТ)',
-    fields: [
-      { id: 'num', label: 'Номер дела', type: 'number' },
-      { id: 'violator', label: 'IDN | Name (Нарушителя)', type: 'text' },
-      { id: 'rules', label: 'Нарушенные пункты Устава', type: 'text' },
-      { id: 'punish', label: 'Какое наказание выдано', type: 'text' },
-      { id: 'proof', label: 'Доказательства (ссылки)', type: 'text' }
-    ],
-    gen: (d, user) => `Дело №${d.num}\n[1] ${user.callsign} | ${user.nickname}\n[2] ${d.violator}\n[3] ${d.rules}\n[4] ${d.punish}\n[5] ${d.proof}`
+  punishment: {
+    name: 'Рапорт наказания (ДВ/ДН/СКТ)',
+    template: `Рапорт наказания №[NUMBER]
+[1] @
+[2] @
+[3] Тип наказания (ДВ/ДН/СКТ): [TYPE]
+[4] @[👮] Ударный Клон
+[5] Ссылка на доказательство: [LINK]`
   },
-  wanted: {
-    title: 'Подача в розыск',
-    fields: [
-      { id: 'target', label: 'IDN | Rank | Name (Разыскиваемого)', type: 'text' },
-      { id: 'rules', label: 'Нарушенные пункты', type: 'text' },
-      { id: 'proof', label: 'Доказательства', type: 'text' }
-    ],
-    gen: (d, user) => `[1] ${user.callsign} | ${user.nickname}\n[2] ${d.target}\n[3] ${d.rules}\n[4] @[👮] Ударный Клон\n[5] ${d.proof}`
+  search: {
+    name: 'Подача в розыск',
+    template: `Подача в розыск №[NUMBER]
+[1] @
+[2] @
+[3] Причина розыска (Был задержан/Приказ/Прочее): [REASON]
+[4] @[👮] Ударный Клон
+[5] Ссылка из канала 《📚》доклады-ук: [LINK]`
   },
   reprimand: {
-    title: 'Выдача выговора УК',
-    fields: [
-      { id: 'target', label: 'Кого наказываем (Пинг/Ник)', type: 'text' },
-      { id: 'type', label: 'Тип (Устный/Письменный)', type: 'text' },
-      { id: 'reason', label: 'Причина', type: 'text' }
+    name: 'Выговор УК',
+    template: `Выговор УК №[NUMBER]
+[1] @
+[2] @
+[3] Тип выговора (устный/письменный): [TYPE]
+[4] Причина: [REASON]
+[5] @[🗒️] Интендант УК`
+  }
+};
+
+// ===== INITIALIZE DATABASE =====
+function initializeDatabase() {
+  const existing = localStorage.getItem(STORAGE_KEY);
+  if (existing) return;
+
+  const initialData = {
+    users: [
+      { id: '76561198000000001', nick: 'Admin', callsign: 'ADMIN', password: 'admin', role: 'site_admin' }
     ],
-    gen: (d, user) => `[1] @\n[2] ${d.target}\n[3] ${d.type}\n[4] ${d.reason}\n[5] @[🗒️] Интендант УК`
-  }
-};
-
-function switchReportTab(tab) {
-  currentReportTab = tab;
-  document.querySelectorAll('.report-tabs .tab-btn').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase().includes(tab === 'event' ? 'событие' : tab === 'punish' ? 'наказание' : tab === 'wanted' ? 'розыск' : 'выговор')));
-  renderReportForm();
-}
-
-function renderReportForm() {
-  const container = $('#reportFormContainer');
-  if (!container) return;
-  const tpl = REPORT_TEMPLATES[currentReportTab];
-  let html = `<h3>${tpl.title}</h3><form id="genForm" style="display:grid; gap:15px; margin-top:15px;">`;
-  tpl.fields.forEach(f => {
-    html += `<div><label>${f.label}</label><input type="${f.type}" id="f_${f.id}" required style="width:100%; padding:8px; background:#222; border:1px solid #444; color:white; border-radius:4px;"></div>`;
-  });
-  html += `<button type="submit" class="btn primary">Сгенерировать и скопировать</button></form>`;
-  container.innerHTML = html;
-  
-  $('#genForm').onsubmit = (e) => {
-    e.preventDefault();
-    const data = {};
-    tpl.fields.forEach(f => data[f.id] = $(`#f_${f.id}`).value);
-    const result = tpl.gen(data, currentUser());
-    $('#reportPre').textContent = result;
-    $('#reportOutput').style.display = 'block';
-    navigator.clipboard.writeText(result);
-    alert('Скопировано в буфер обмена!');
+    reports: [],
+    roles: {}
   };
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
 }
 
-function render() {
-  renderNav();
-  const app = $('#appContent');
-  app.innerHTML = VIEWS[currentView] ? VIEWS[currentView]() : VIEWS.home();
+function getDatabase() {
+  const data = localStorage.getItem(STORAGE_KEY);
+  return data ? JSON.parse(data) : { users: [], reports: [], roles: {} };
+}
+
+function saveDatabase(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// ===== VIEW MANAGEMENT =====
+function showView(viewName) {
+  document.querySelectorAll('[data-view]').forEach(v => v.style.display = 'none');
+  const view = document.querySelector(`[data-view="${viewName}"]`);
+  if (view) view.style.display = 'block';
   
-  if (currentView === 'home' && !currentUser()) {
-    $('#openLoginBtn').onclick = () => { switchTab('login'); $('#steamModal').showModal(); };
-    $('#openRegisterBtn').onclick = () => { switchTab('register'); $('#steamModal').showModal(); };
+  document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+  document.querySelector(`[data-nav="${viewName}"]`)?.classList.add('active');
+}
+
+// ===== AUTHENTICATION =====
+function login(steamId, password) {
+  const db = getDatabase();
+  const user = db.users.find(u => u.id === steamId);
+  
+  if (!user || user.password !== password) {
+    alert('Неверный Steam ID или пароль');
+    return false;
   }
-  if (currentView === 'reports') renderReportForm();
-  if (currentView === 'command') renderUsersList();
+  
+  PersistentStorage.setSession(steamId);
+  return true;
 }
 
-function renderUsersList() {
-  const container = $('#usersList');
-  if (!container) return;
-  container.innerHTML = db.users.map(u => `
-    <div class="user-row" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #333;">
-      <div><b>${u.nickname}</b> (${u.callsign})<br><small>${u.steamId}</small></div>
-      <select onchange="updateUserRole('${u.id}', this.value)">
-        ${ROLES.map(r => `<option value="${r.key}" ${u.role === r.key ? 'selected' : ''}>${r.title}</option>`).join('')}
-      </select>
-    </div>`).join('');
-}
-
-function updateUserRole(userId, newRole) {
-  const user = db.users.find(u => u.id === userId);
-  if (user) {
-    user.role = newRole;
-    saveDb();
-    alert('Роль обновлена');
+function register(steamId, nick, callsign, password) {
+  const db = getDatabase();
+  
+  if (db.users.find(u => u.id === steamId)) {
+    alert('Пользователь с таким Steam ID уже существует');
+    return false;
   }
+  
+  db.users.push({
+    id: steamId,
+    nick: nick,
+    callsign: callsign,
+    password: password,
+    role: 'recruit'
+  });
+  
+  saveDatabase(db);
+  PersistentStorage.setSession(steamId);
+  return true;
 }
 
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `${tab}Tab`));
-}
-
-document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
-$('#closeModal').onclick = () => $('#steamModal').close();
-
-$('#loginForm').onsubmit = (e) => {
-  e.preventDefault();
-  const data = new FormData(e.target);
-  const user = db.users.find(u => u.steamId === data.get('steamId') && u.password === data.get('password'));
-  if (user) {
-    PersistentStorage.setSession(user.id);
-    $('#steamModal').close();
-    switchView('home');
-  } else { alert('Неверные данные'); }
-};
-
-$('#steamForm').onsubmit = (e) => {
-  e.preventDefault();
-  const data = new FormData(e.target);
-  const steamId = data.get('steamId');
-  if (db.users.find(u => u.steamId === steamId)) return alert('Steam ID занят');
-  const newUser = { id: Date.now().toString(), steamId, nickname: data.get('nickname'), callsign: data.get('callsign'), password: data.get('password'), role: 'recruit' };
-  db.users.push(newUser);
-  saveDb();
-  PersistentStorage.setSession(newUser.id);
-  $('#steamModal').close();
-  switchView('home');
-};
-
-$('#logoutBtn').onclick = () => { 
+function logout() {
   PersistentStorage.clearSession();
-  switchView('home'); 
-};
+  location.reload();
+}
 
-$('#profileEditForm').onsubmit = (e) => {
-  e.preventDefault();
-  const user = currentUser();
-  if (!user) return alert('Ошибка: пользователь не найден');
+// ===== REPORT GENERATION =====
+function generateReport(type, data) {
+  const template = REPORT_TEMPLATES[type].template;
+  let report = template;
   
-  const data = new FormData(e.target);
-  const newNickname = data.get('nickname');
-  const newCallsign = data.get('callsign');
-  const newPassword = data.get('password');
+  const number = Math.floor(Math.random() * 1000);
+  report = report.replace('[NUMBER]', number);
   
-  if (!newNickname || !newCallsign) return alert('Заполните все обязательные поля');
+  Object.keys(data).forEach(key => {
+    report = report.replace(`[${key.toUpperCase()}]`, data[key] || '');
+  });
   
-  user.nickname = newNickname;
-  user.callsign = newCallsign;
-  if (newPassword) user.password = newPassword;
-  
-  saveDb();
-  $('#profileEditModal').close();
-  render();
-  alert('Профиль успешно обновлен!');
-};
+  return report;
+}
 
-$('#resetDemo').onclick = () => { 
-  if (confirm('Удалить все данные?')) { 
-    localStorage.removeItem(STORAGE_KEY);
-    PersistentStorage.clearSession();
-    db = createInitialDb(); 
-    switchView('home'); 
-  } 
-};
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Рапорт скопирован в буфер обмена!');
+  });
+}
 
-// Инициализация при загрузке страницы
-window.addEventListener('load', () => {
-  render();
-  // Заполняем форму редактирования текущими данными
-  const user = currentUser();
-  if (user && $('#profileEditForm')) {
-    $('[name="nickname"]', $('#profileEditModal')).value = user.nickname;
-    $('[name="callsign"]', $('#profileEditModal')).value = user.callsign;
+// ===== UI INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', () => {
+  initializeDatabase();
+  
+  const currentUserId = PersistentStorage.getSession();
+  const db = getDatabase();
+  const currentUser = currentUserId ? db.users.find(u => u.id === currentUserId) : null;
+  
+  // Update UI based on auth status
+  if (currentUser) {
+    document.querySelector('.hero')?.style.display = 'none';
+    document.querySelector('.profile-button')?.style.display = 'inline-block';
+    document.querySelector('[data-nav="reports"]')?.style.display = 'block';
+    document.querySelector('[data-nav="cabinet"]')?.style.display = 'block';
+    
+    showView('base');
+  } else {
+    showView('home');
   }
+  
+  // Modal tabs
+  const loginTab = document.querySelector('[data-tab="login"]');
+  const registerTab = document.querySelector('[data-tab="register"]');
+  
+  if (loginTab) {
+    loginTab.addEventListener('click', () => {
+      document.querySelectorAll('[data-tab-content]').forEach(el => el.style.display = 'none');
+      document.querySelector('[data-tab-content="login"]').style.display = 'block';
+      document.querySelectorAll('[data-tab]').forEach(el => el.classList.remove('active'));
+      loginTab.classList.add('active');
+    });
+  }
+  
+  if (registerTab) {
+    registerTab.addEventListener('click', () => {
+      document.querySelectorAll('[data-tab-content]').forEach(el => el.style.display = 'none');
+      document.querySelector('[data-tab-content="register"]').style.display = 'block';
+      document.querySelectorAll('[data-tab]').forEach(el => el.classList.remove('active'));
+      registerTab.classList.add('active');
+    });
+  }
+  
+  // Base section tabs
+  document.querySelectorAll('[data-base-tab]').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      const tabName = e.target.dataset.baseTab;
+      document.querySelectorAll('[data-base-content]').forEach(el => el.style.display = 'none');
+      document.querySelector(`[data-base-content="${tabName}"]`).style.display = 'block';
+      document.querySelectorAll('[data-base-tab]').forEach(el => el.classList.remove('active'));
+      e.target.classList.add('active');
+    });
+  });
+  
+  // Profile edit
+  document.querySelector('.profile-button')?.addEventListener('click', () => {
+    if (currentUser) {
+      document.querySelector('[data-modal="profile"]').style.display = 'block';
+      document.querySelector('[name="edit-nick"]').value = currentUser.nick;
+      document.querySelector('[name="edit-callsign"]').value = currentUser.callsign;
+    }
+  });
+  
+  // Report generation
+  document.querySelectorAll('[data-report-type]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const type = e.target.dataset.reportType;
+      const form = document.querySelector(`[data-report-form="${type}"]`);
+      if (form) {
+        const inputs = form.querySelectorAll('input, textarea');
+        const data = {};
+        inputs.forEach(input => {
+          data[input.name] = input.value;
+        });
+        const report = generateReport(type, data);
+        copyToClipboard(report);
+      }
+    });
+  });
 });

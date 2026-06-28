@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
@@ -16,7 +16,11 @@
       <span>Ударный взвод</span>
     </a>
     <nav class="nav" id="mainNav">
-      <!-- Навигация будет генерироваться динамически в app.js -->
+      <a class="nav-link" data-nav="home" onclick="switchView('home')">Главная</a>
+      <a class="nav-link" data-nav="decrees" onclick="switchView('decrees')">Постановления</a>
+      <a class="nav-link" data-nav="base" onclick="switchView('base')" style="display:none;">База</a>
+      <a class="nav-link" data-nav="reports" onclick="switchView('reports')" style="display:none;">Рапорты</a>
+      <a class="nav-link" data-nav="cabinet" onclick="switchView('cabinet')" style="display:none;">Кабинет КМД</a>
     </nav>
     <div id="headerAuth">
       <button class="btn ghost" id="profileBtn" type="button" hidden>Профиль</button>
@@ -25,15 +29,193 @@
   </header>
 
   <main id="appContent">
-    <!-- Сюда будет рендериться активный экран (view) -->
+    <!-- HOME VIEW -->
+    <div data-view="home" style="display:block;">
+      <section class="hero">
+        <div class="container">
+          <div class="hero-content">
+            <p class="eyebrow">ЗАКРЫТЫЙ ПОРТАЛ - STEAM-ИДЕНТИФИКАЦИЯ - CT LEGION</p>
+            <h1>РОТА<br>УДАРНЫХ<br>КЛОНОВ</h1>
+            <p>Для неавторизованного бойца открыт только путь новичка. Зарегистрируйся через Steam, чтобы получить личный кабинет и доступ по роли.</p>
+            <div class="hero-buttons">
+              <button class="btn primary" onclick="openModal('login')">Войти в профиль</button>
+              <button class="btn secondary" onclick="openModal('register')">Зарегистрироваться</button>
+            </div>
+          </div>
+          <div class="hero-status">
+            <div class="status-card">
+              <div class="status-indicator"></div>
+              <h3>Гость</h3>
+              <p>Статус: Гость</p>
+              <p>Доступ: только раздел «Путь новичка».</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="decrees-section">
+        <div class="container">
+          <p class="eyebrow">ОТКРЫТЫЙ РАЗДЕЛ</p>
+          <h2>Путь новичка</h2>
+          <p>Этот раздел виден всем, даже без регистрации. Здесь описаны базовые правила для новичков и информация о взводе.</p>
+          <div class="decree-grid" id="decreeList"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- DECREES VIEW -->
+    <div data-view="decrees" style="display:none;">
+      <section class="decrees-section">
+        <div class="container">
+          <p class="eyebrow">ПОСТАНОВЛЕНИЯ ВЗВОДА</p>
+          <h2>Все 11 постановлений Ударного взвода</h2>
+          <p>Обязательные к исполнению правила и регламенты для всех членов взвода.</p>
+          <div class="decree-grid" id="decreeFullList"></div>
+          <div style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+            <h3>📖 Устав ВАР</h3>
+            <p>Полный устав Великой Армии Республики находится по ссылке:</p>
+            <a href="https://sites.google.com/view/riseoftherepublicdiscovery/устав-вар?authuser=0" target="_blank" class="btn secondary" style="display:inline-block; margin-top: 10px;">Открыть Устав ВАР</a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- BASE VIEW -->
+    <div data-view="base" style="display:none;">
+      <section class="base-section">
+        <div class="container">
+          <p class="eyebrow">ВНУТРЕННЯЯ ИНФОРМАЦИЯ</p>
+          <h2>База знаний Ударного взвода</h2>
+          <p>Полная информация о системе повышения, регламентах, иерархии и медалях.</p>
+          
+          <div class="base-tabs">
+            <button class="base-tab-btn active" data-base-tab="promotion">Система повышения</button>
+            <button class="base-tab-btn" data-base-tab="legal">Нормативно-правовой блок</button>
+            <button class="base-tab-btn" data-base-tab="recruit">Регламент рекрута</button>
+            <button class="base-tab-btn" data-base-tab="ethics">Этика Ударника</button>
+            <button class="base-tab-btn" data-base-tab="hierarchy">Иерархия и медали</button>
+          </div>
+
+          <div class="base-content-area">
+            <div data-base-content="promotion" style="display:block;" class="base-content"></div>
+            <div data-base-content="legal" style="display:none;" class="base-content"></div>
+            <div data-base-content="recruit" style="display:none;" class="base-content"></div>
+            <div data-base-content="ethics" style="display:none;" class="base-content"></div>
+            <div data-base-content="hierarchy" style="display:none;" class="base-content"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- REPORTS VIEW -->
+    <div data-view="reports" style="display:none;">
+      <section class="reports-section">
+        <div class="container">
+          <p class="eyebrow">ГЕНЕРАТОР РАПОРТОВ</p>
+          <h2>Создание рапортов для Discord</h2>
+          <p>Выберите тип рапорта, заполните форму и скопируйте готовый текст для отправки в Discord.</p>
+          
+          <div class="reports-grid">
+            <div class="report-card">
+              <h3>📋 Обычный рапорт (Событие)</h3>
+              <form class="report-form" data-report-form="event">
+                <input type="text" name="number" placeholder="Номер рапорта" required>
+                <input type="text" name="author" placeholder="Ваш позывной" required>
+                <input type="text" name="participant" placeholder="Позывной участника" required>
+                <input type="text" name="event" placeholder="Название события" required>
+                <textarea name="description" placeholder="Описание участия" rows="4"></textarea>
+                <button type="button" class="btn primary" onclick="generateReport('event', this.closest('form'))">Сгенерировать</button>
+              </form>
+            </div>
+
+            <div class="report-card">
+              <h3>⚖️ Рапорт наказания (ДВ/ДН/СКТ)</h3>
+              <form class="report-form" data-report-form="punishment">
+                <input type="text" name="number" placeholder="Номер рапорта" required>
+                <input type="text" name="author" placeholder="Ваш позывной" required>
+                <input type="text" name="violator" placeholder="Позывной нарушителя" required>
+                <select name="type" required>
+                  <option value="">Выберите тип наказания</option>
+                  <option value="ДВ">ДВ (Дело взвода)</option>
+                  <option value="ДН">ДН (Дело нарушителя)</option>
+                  <option value="СКТ">СКТ (Сокращенное)</option>
+                </select>
+                <input type="text" name="link" placeholder="Ссылка на доказательство" required>
+                <button type="button" class="btn primary" onclick="generateReport('punishment', this.closest('form'))">Сгенерировать</button>
+              </form>
+            </div>
+
+            <div class="report-card">
+              <h3>🔍 Подача в розыск</h3>
+              <form class="report-form" data-report-form="search">
+                <input type="text" name="number" placeholder="Номер рапорта" required>
+                <input type="text" name="author" placeholder="Ваш позывной" required>
+                <input type="text" name="target" placeholder="Позывной разыскиваемого" required>
+                <select name="reason" required>
+                  <option value="">Выберите причину</option>
+                  <option value="Был задержан">Был задержан</option>
+                  <option value="Приказ">Приказ</option>
+                  <option value="Прочее">Прочее</option>
+                </select>
+                <input type="text" name="link" placeholder="Ссылка на доказательство" required>
+                <button type="button" class="btn primary" onclick="generateReport('search', this.closest('form'))">Сгенерировать</button>
+              </form>
+            </div>
+
+            <div class="report-card">
+              <h3>⚠️ Выговор УК</h3>
+              <form class="report-form" data-report-form="reprimand">
+                <input type="text" name="number" placeholder="Номер выговора" required>
+                <input type="text" name="author" placeholder="Ваш позывной" required>
+                <input type="text" name="violator" placeholder="Позывной нарушителя" required>
+                <select name="type" required>
+                  <option value="">Выберите тип выговора</option>
+                  <option value="устный">Устный</option>
+                  <option value="письменный">Письменный</option>
+                </select>
+                <textarea name="reason" placeholder="Причина выговора" rows="3"></textarea>
+                <button type="button" class="btn primary" onclick="generateReport('reprimand', this.closest('form'))">Сгенерировать</button>
+              </form>
+            </div>
+          </div>
+
+          <div style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+            <h3>ℹ️ Примечание по нумерации рапортов</h3>
+            <ul>
+              <li>[1] Нумерация сбрасывается в 0:00 (по МСК) понедельника новой календарной недели</li>
+              <li>[2] Первый рапорт при переходе к новой календарной неделе должен обозначаться как №1</li>
+              <li>[3] При нумерации вашего рапорта необходимо посмотреть на номер предыдущего и прибавить к нему 1</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- CABINET VIEW -->
+    <div data-view="cabinet" style="display:none;">
+      <section class="cabinet-section">
+        <div class="container">
+          <p class="eyebrow">УПРАВЛЕНИЕ</p>
+          <h2>Кабинет командира</h2>
+          <p>Управление составом взвода и выдача ролей (доступно только для руководства).</p>
+          
+          <div class="cabinet-content">
+            <h3>Управление ролями</h3>
+            <p>Функция управления ролями доступна только для DEP-SP и выше.</p>
+            <div id="roleManagement" style="margin-top: 20px;"></div>
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
 
+  <!-- MODALS -->
   <dialog class="steam-modal" id="steamModal">
     <div class="modal-card">
       <button class="close" id="closeModal" aria-label="Закрыть">×</button>
       <div class="modal-tabs">
-        <button class="tab-btn active" data-tab="login">Вход</button>
-        <button class="tab-btn" data-tab="register">Регистрация</button>
+        <button class="tab-btn active" data-tab="login" onclick="switchTab('login')">Вход</button>
+        <button class="tab-btn" data-tab="register" onclick="switchTab('register')">Регистрация</button>
       </div>
       
       <div class="tab-content active" id="loginTab">
@@ -81,10 +263,205 @@
   </dialog>
 
   <footer class="shell footer">
-    <p>CT Legion · Rise of Republic · v1.1.5 SPA</p>
+    <p>CT Legion · Rise of Republic · v1.1.6 MVP</p>
     <button class="link-button" id="resetDemo" type="button">Сбросить данные</button>
   </footer>
 
   <script src="app.js"></script>
+  <script>
+    // Initialize Base content on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const baseContents = {
+        promotion: document.querySelector('[data-base-content="promotion"]'),
+        legal: document.querySelector('[data-base-content="legal"]'),
+        recruit: document.querySelector('[data-base-content="recruit"]'),
+        ethics: document.querySelector('[data-base-content="ethics"]'),
+        hierarchy: document.querySelector('[data-base-content="hierarchy"]')
+      };
+
+      // Populate base content from BASE_SECTIONS
+      if (window.BASE_SECTIONS) {
+        Object.keys(baseContents).forEach(key => {
+          if (baseContents[key] && window.BASE_SECTIONS[key]) {
+            baseContents[key].innerHTML = window.BASE_SECTIONS[key].content;
+          }
+        });
+      }
+    });
+
+    function switchView(viewName) {
+      document.querySelectorAll('[data-view]').forEach(v => v.style.display = 'none');
+      document.querySelector(`[data-view="${viewName}"]`).style.display = 'block';
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+      document.querySelector(`[data-nav="${viewName}"]`)?.classList.add('active');
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelector(`#${tabName}Tab`).classList.add('active');
+      document.querySelectorAll('[data-tab]').forEach(el => el.classList.remove('active'));
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    }
+
+    function openModal(type) {
+      if (type === 'login' || type === 'register') {
+        document.getElementById('steamModal').showModal();
+        switchTab(type);
+      }
+    }
+
+    function generateReport(type, form) {
+      const formData = new FormData(form);
+      let template = '';
+      
+      if (type === 'event') {
+        template = `Рапорт №${formData.get('number')}
+[1] @${formData.get('author')}
+[2] @${formData.get('participant')}
+[3] В каком событии Вы принимали участие: ${formData.get('event')}
+[4] ${formData.get('description')}`;
+      } else if (type === 'punishment') {
+        template = `Рапорт наказания №${formData.get('number')}
+[1] @${formData.get('author')}
+[2] @${formData.get('violator')}
+[3] Тип наказания (${formData.get('type')}): ${formData.get('type')}
+[4] @[👮] Ударный Клон
+[5] Ссылка на доказательство: ${formData.get('link')}`;
+      } else if (type === 'search') {
+        template = `Подача в розыск №${formData.get('number')}
+[1] @${formData.get('author')}
+[2] @${formData.get('target')}
+[3] Причина розыска: ${formData.get('reason')}
+[4] @[👮] Ударный Клон
+[5] Ссылка: ${formData.get('link')}`;
+      } else if (type === 'reprimand') {
+        template = `Выговор УК №${formData.get('number')}
+[1] @${formData.get('author')}
+[2] @${formData.get('violator')}
+[3] Тип выговора: ${formData.get('type')}
+[4] Причина: ${formData.get('reason')}
+[5] @[🗒️] Интендант УК`;
+      }
+
+      navigator.clipboard.writeText(template).then(() => {
+        alert('Рапорт скопирован в буфер обмена!');
+      });
+    }
+
+    // Modal close handlers
+    document.getElementById('closeModal')?.addEventListener('click', () => {
+      document.getElementById('steamModal').close();
+    });
+
+    document.getElementById('closeProfileModal')?.addEventListener('click', () => {
+      document.getElementById('profileEditModal').close();
+    });
+
+    // Login form handler
+    document.getElementById('loginForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const steamId = e.target.steamId.value;
+      const password = e.target.password.value;
+      
+      if (login(steamId, password)) {
+        document.getElementById('steamModal').close();
+        location.reload();
+      }
+    });
+
+    // Register form handler
+    document.getElementById('steamForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const steamId = e.target.steamId.value;
+      const nick = e.target.nickname.value;
+      const callsign = e.target.callsign.value;
+      const password = e.target.password.value;
+      
+      if (register(steamId, nick, callsign, password)) {
+        document.getElementById('steamModal').close();
+        location.reload();
+      }
+    });
+
+    // Profile edit handler
+    document.getElementById('profileEditForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const currentUserId = PersistentStorage.getSession();
+      const db = getDatabase();
+      const user = db.users.find(u => u.id === currentUserId);
+      
+      if (user) {
+        user.nick = e.target.nickname.value;
+        user.callsign = e.target.callsign.value;
+        if (e.target.password.value) {
+          user.password = e.target.password.value;
+        }
+        saveDatabase(db);
+        document.getElementById('profileEditModal').close();
+        alert('Профиль обновлен!');
+      }
+    });
+
+    // Profile button handler
+    document.getElementById('profileBtn')?.addEventListener('click', () => {
+      const currentUserId = PersistentStorage.getSession();
+      const db = getDatabase();
+      const user = db.users.find(u => u.id === currentUserId);
+      
+      if (user) {
+        document.querySelector('[name="nickname"]').value = user.nick;
+        document.querySelector('[name="callsign"]').value = user.callsign;
+        document.getElementById('profileEditModal').showModal();
+      }
+    });
+
+    // Logout handler
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      logout();
+    });
+
+    // Reset demo data
+    document.getElementById('resetDemo')?.addEventListener('click', () => {
+      if (confirm('Вы уверены? Это удалит все данные.')) {
+        localStorage.clear();
+        location.reload();
+      }
+    });
+
+    // Base tabs handler
+    document.querySelectorAll('.base-tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const tabName = e.target.dataset.baseTab;
+        document.querySelectorAll('[data-base-content]').forEach(el => el.style.display = 'none');
+        document.querySelector(`[data-base-content="${tabName}"]`).style.display = 'block';
+        document.querySelectorAll('.base-tab-btn').forEach(el => el.classList.remove('active'));
+        e.target.classList.add('active');
+      });
+    });
+
+    // Populate decrees on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const decreeList = document.getElementById('decreeList');
+      const decreeFullList = document.getElementById('decreeFullList');
+      
+      if (decreeList && window.DECREES_DATA) {
+        decreeList.innerHTML = window.DECREES_DATA.map(decree => `
+          <div class="decree-card">
+            <h3>${decree.title}</h3>
+            <p>${decree.body}</p>
+          </div>
+        `).join('');
+      }
+      
+      if (decreeFullList && window.DECREES_DATA) {
+        decreeFullList.innerHTML = window.DECREES_DATA.map(decree => `
+          <div class="decree-card">
+            <h3>${decree.title}</h3>
+            <p>${decree.body}</p>
+          </div>
+        `).join('');
+      }
+    });
+  </script>
 </body>
 </html>
