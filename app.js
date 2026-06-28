@@ -48,106 +48,73 @@ class PersistentStorage {
   static clearSession() {
     localStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
-    this.deleteCookie('session_user_id');
+    this.setCookie('session_user_id', '', -1);
   }
 
-  static setCookie(name, value, days = 30) {
-    const date = new Date();
-    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-    const expires = "expires=" + date.toUTCString();
-    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+  static setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+      let date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/";
   }
 
   static getCookie(name) {
-    const nameEQ = name + "=";
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      let cookie = cookies[i].trim();
-      if (cookie.indexOf(nameEQ) === 0) {
-        return decodeURIComponent(cookie.substring(nameEQ.length));
-      }
+    let nameEQ = name + "=";
+    let ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
     }
     return null;
   }
-
-  static deleteCookie(name) {
-    this.setCookie(name, "", -1);
-  }
 }
 
-// ===== DATABASE SYSTEM =====
-const DECREES_DATA = [
-  { id: 1, title: '📵 Постановление №1 — «Рация УК»', body: 'Каждый боец Ударного Взвода обязан во время пребывания на ОВО/ВО находиться в голосовом канале «Рация УК» в ЗКС либо на вспомогательной частоте «Рация УК» на комлинке.<br><br><b>«Связь»</b> — команда, при которой каждый боец обязан зайти на вспомогательную рацию УК. При отсутствии рации — предварительно создать её.<br><br>• Подключиться: F4 → Рация → УК|CT → Пароль: 1687.<br>• Создать: F4 → Рация → Создать канал → Тип: «Приватный», Название: УК|CT, Пароль: 1687.' },
-  { id: 2, title: '💥 Постановление №2 — «Выдача штрафбата»', body: 'При многократных нарушениях со стороны бойца CT, неадекватном поведении или тяжких нарушениях Ударный клон имеет право написать заявку о выдаче штрафбата. Заявку одобряет CO-SP, командующий состав формирования и ВК.' },
-  { id: 3, title: '🚨 Постановление №3 — «Посторонние лица в казарме CT»', body: 'При нахождении в казарме лиц без полномочий на проход Ударный клон обязан уточнить, с чьего разрешения и с какой целью они находятся в казарме. При неуважительной причине сопроводить на выход, при отказе вызвать гвардию.' },
-  { id: 4, title: '📜 Постановление №4 — «Норма докладов»', body: 'Каждый боец обязуется еженедельно выполнять работу:<br>• SOL-SP — 5 докладов в неделю.<br>• OFC-SP — 3 доклада в неделю.<br>• DEP-SP — без нормы, работа по рассмотрению и указанию CO-SP+.<br><br>За невыполнение нормы: 1 неделя — устный выговор; 2 недели подряд — письменный; 3 недели подряд — снятие.' },
-  { id: 5, title: '🎁 Постановление №5 — «Поощрение за работу»', body: 'Каждый боец имеет право запросить поощрение в канале «#《🏅》поощрения» за проделанную работу по системе повышения и поощрений Ударного взвода.' },
-  { id: 6, title: '⚔️ Постановление №6 — «О недопустимости нарушений Устава бойцами УК»', body: 'При нарушении Устава бойцами УК разрешено выдавать только ДН — напоминание пункта Устава. При заключении бойца УК в КПЗ он получает письменный выговор внутри структуры УК.' },
-  { id: 7, title: '🪶 Постановление №7 — «Актуальность таблицы»', body: 'При изменении звания, должности, позывного или основной формы в личном деле боец обязан отписать в канал «#《📝》состав-sp» в течение 3 дней.' },
-  { id: 8, title: '🖥️ Постановление №8 — «Подача рапортов»', body: 'Все доклады из канала «#《⚖️》наказания» должны сразу дублироваться в канал Ударных Клонов «#👮🏻│дв-скт-передачи».' },
-  { id: 9, title: '⛳ Постановление №9 — «Об увольнительных»', body: 'Каждый боец имеет право запросить увольнение в канале «#《⛳》увольнение-sp» в соответствии с 5 Директивой CT.' },
-  { id: 10, title: '🚷 Постановление №10 — «О выговорах»', body: 'За неисполнение постановлений, приказов и предписаний каждый боец подлежит санкциям: устным и письменным выговорам.' },
-  { id: 11, title: '👁️ Постановление №11 — «О должностных обязанностях»', body: 'Регламентирует права и обязанности Куратора, Командира, Заместителя, Офицеров и Рядового состава Ударного Взвода.' }
-];
-
-// ===== FULL CONTENT FOR BASE SECTION =====
-const BASE_SECTIONS = {
+// ===== DATABASE CONTENT =====
+window.BASE_SECTIONS = {
   promotion: {
-    title: 'Система повышения и поощрений',
+    title: 'Система повышения',
     content: `
-      <h3>Система повышения и поощрений взвода Ударных клонов СТ</h3>
-      <p><b>Инструкция:</b></p>
-      <ol>
-        <li>Повышение в нашем взводе осуществляется по мере накопления определенного количества баллов или выполнения конкретных задач.</li>
-        <li>Баллы начисляются за участие в тренировках, ивентах, патрулирование и успешное выполнение боевых задач.</li>
-        <li>Рапорт о проделанной работе должен быть подан в соответствующий канал Discord до конца недели.</li>
-        <li>Решение о повышении принимает командный состав (OFC-SP+).</li>
-      </ol>
-      <p><b>Сержантский состав:</b></p>
+      <h3>Система повышения и поощрений</h3>
+      <p><b>СЕРЖАНТСКИЙ СОСТАВ:</b></p>
+      <p>Сержантский состав является основой взвода. Повышение происходит на основе балловой системы и активного участия в жизни взвода.</p>
+      <h4>[1] Этап: Рекрут -> Рядовой</h4>
       <ul>
-        <li><b>Recruit SP → PVT-SP:</b> Прохождение КМБ, сдача устава и базовых регламентов.</li>
-        <li><b>PVT-SP → CPL-SP:</b> 15 баллов, участие в 3 патрулях, отсутствие выговоров.</li>
-        <li><b>CPL-SP → SGT-SP:</b> 25 баллов, проведение 2 тренировок для рекрутов, сдача экзамена на знание тактики.</li>
-        <li><b>SGT-SP → SSGT-SP:</b> 40 баллов, руководство группой в 2 операциях, рекомендация от OFC-SP.</li>
+        <li>Прохождение базового курса обучения (БКО).</li>
+        <li>Сдача регламента оружия и основ субординации.</li>
+        <li>Участие в 1 тренировке.</li>
       </ul>
-      <p><b>Уоррент-офицерский состав:</b></p>
+      <h4>[2] Этап: Рядовой -> Капрал</h4>
       <ul>
-        <li><b>SSGT-SP → WO-SP:</b> 60 баллов, сдача расширенного теста на знание законодательства ВАР, 2 недели в звании SSGT.</li>
-        <li><b>WO-SP → CWO-SP:</b> 80 баллов, безупречная служба, активное участие в жизни взвода, назначение приказом DEP-SP+.</li>
+        <li>Сдача расширенного курса (РКО).</li>
+        <li>Участие в 2 патрулях.</li>
+        <li>Набор 20 баллов.</li>
       </ul>
-      <p><b>Поощрения:</b></p>
+      <h4>[3] Этап: Капрал -> Сержант</h4>
       <ul>
-        <li><b>Медаль «За отвагу»:</b> Выдается за исключительное мужество в бою. Дает +10 баллов к повышению.</li>
-        <li><b>Благодарность в личное дело:</b> Выдается за инициативность. Дает +5 баллов.</li>
-        <li><b>Снятие устного выговора:</b> За активную работу в течение недели.</li>
+        <li>Прохождение сержантской школы.</li>
+        <li>Участие в 3 операциях.</li>
+        <li>Набор 40 баллов.</li>
+      </ul>
+      <p><b>СИСТЕМА ПООЩРЕНИЙ:</b></p>
+      <ul>
+        <li>Благодарность в личное дело: +5 баллов.</li>
+        <li>Успешное выполнение спецоперации: +10 баллов.</li>
+        <li>Обучение рекрутов: +7 баллов за каждого бойца.</li>
       </ul>
     `
   },
   legal: {
-    title: 'Нормативно-Правовой Блок ВАР',
+    title: 'Нормативно-правовой блок',
     content: `
-      <h3>Нормативно - Правовой Блок ВАР (с поправками от 21.03.2026)</h3>
-      <p><b>АББРЕВИАТУРА:</b></p>
-      <ul>
-        <li>ВАР — Великая Армия Республики</li>
-        <li>ЗП — Золотые Правила</li>
-        <li>ВЭ — Воинский Этикет</li>
-        <li>ППвС — Правила поведения в строю</li>
-        <li>РНО — Регламент ношения оружия</li>
-        <li>ОиПВЕВ — Обязанности и права всех единиц ВАР</li>
-        <li>ПС — Постовая служба</li>
-        <li>ПА — Правила арсенала</li>
-        <li>СВ — Свободное время</li>
-        <li>ППБнВО — Правила поведения бойца на военном объекте</li>
-        <li>ПВО — Правила военных объектов</li>
-        <li>ТБ — Техника безопасности</li>
-        <li>МсОД — Места с ограниченным допуском</li>
-      </ul>
-      <p><b>ЗОЛОТЫЕ ПРАВИЛА (ЗП):</b></p>
+      <h3>Нормативно-Правовой Блок ВАР</h3>
+      <p><b>ЗОЛОТЫЕ ПРАВИЛА УК:</b></p>
       <ol>
-        <li>Приказ старшего по званию — закон. Необсуждаем, пока не выполнен.</li>
-        <li>Запрещено открывать огонь по своим.</li>
-        <li>Запрещено дезертирство и предательство.</li>
+        <li>Приказ командира — закон.</li>
+        <li>Ударный клон всегда на страже порядка.</li>
         <li>Соблюдение субординации обязательно для всех.</li>
       </ol>
       <p><b>ВОИНСКИЙ ЭТИКЕТ (ВЭ):</b></p>
@@ -155,21 +122,6 @@ const BASE_SECTIONS = {
         <li>Обращение к старшему только на «Вы» и по званию.</li>
         <li>Приветствие осуществляется воинским салютом.</li>
         <li>Запрещено использование нецензурной лексики.</li>
-      </ul>
-      <p><b>Правила поведения в строю (ППвС):</b></p>
-      <ul>
-        <li>В строю запрещено: разговаривать, использовать рацию, выходить без разрешения, доставать оружие.</li>
-        <li>Опоздавший в строй должен доложить: «Сэр, [Звание] [Позывной] опоздал в строй. Разрешите встать?»</li>
-      </ul>
-      <p><b>Регламент ношения оружия (РНО):</b></p>
-      <ul>
-        <li>Оружие должно быть на предохранителе (за спиной/в кобуре), если нет прямой угрозы.</li>
-        <li>Использование спецсредств без причины карается выговором.</li>
-      </ul>
-      <p><b>Обязанности и права всех единиц ВАР:</b></p>
-      <ul>
-        <li><b>Обязанность:</b> Защита Республики, выполнение приказов, поддержание дисциплины.</li>
-        <li><b>Право:</b> На отдых, на получение снаряжения, на подачу рапорта.</li>
       </ul>
       <p><b>ПОРЯДОК ЗАДЕРЖАНИЯ НАРУШИТЕЛЯ:</b></p>
       <ol>
@@ -184,119 +136,64 @@ const BASE_SECTIONS = {
     title: 'Регламент для рекрута',
     content: `
       <h3>Регламент для рекрута Ударного взвода</h3>
-      <p><b>Свод правил для новоприбывших бойцов:</b></p>
       <ol>
         <li>Разрешено предотвращать нарушения - заломать руки и положить бойца на пол, после вызвать гвардию.</li>
         <li>Разрешено носить форму УК только со 2-го этапа обучения на SP.</li>
-        <li>Запрещено носить вооружение в ЗК (Примечание: Разрешается ношение второстепенного вооружения).</li>
-        <li>Запрещено свободное посещение КПЗ для доставки нарушителей даже при предварительном оповещении Корусантской Гвардии.</li>
-        <li>R-SP|CT в звании CPL обязуется повыситься в звании до SGT и пройти обучение на специализацию Ударного Клона (SP) в течение 7 дней с момента поступления в отряд.</li>
-        <li>R-SP|CT имеет право присутствовать и наблюдать за задержаниями от полноценных единиц Ударного взвода, оборонять строй во время проведения агит. мероприятий, а также участвовать в слежке за проведением обучения.</li>
+        <li>Запрещено носить вооружение в ЗК.</li>
+        <li>Запрещено свободное посещение КПЗ для доставки нарушителей.</li>
+        <li>R-SP|CT в звании CPL обязуется повыситься до SGT в течение 7 дней.</li>
       </ol>
     `
   },
   ethics: {
-    title: 'Этика Ударного клона',
+    title: 'Этика Ударника',
     content: `
       <h3>Этика Ударного клона</h3>
-      <p>Этика Ударного клона играет ключевую роль в обеспечении законности, справедливости и защите прав существ в рамках процессов, а также способствует повышению доверия общества к правоохранительным органам.</p>
-      <p><b>Командиром отряда были сформированы основные пункты этики:</b></p>
       <h4>[1] Независимость и объективность</h4>
-      <p>Ударный клон должен действовать независимо от внешних влияний и обеспечивать объективность в ходе пресечения преступлений.</p>
+      <p>Ударный клон должен действовать независимо от внешних влияний.</p>
       <h4>[2] Соблюдение законности</h4>
-      <p>Ударный клон должен соблюдать устав и иные документы, руководствоваться ими при реализации своей деятельности.</p>
+      <p>Ударный клон должен соблюдать устав и иные документы.</p>
       <h4>[3] Профессионализм</h4>
-      <p>Ударный клон должен обладать высоким уровнем профессиональных знаний и навыков, постоянно совершенствовать свою квалификацию и следовать этическим стандартам.</p>
+      <p>Высокий уровень знаний и навыков.</p>
       <h4>[4] Уважение</h4>
-      <p>Ударный клон должен уважать любого члена формирования, вне зависимости от степени нарушения. Также способствовать наилучшему пониманию клона о своем проступке/преступлении путем предупреждений, разъяснений и иных методов взаимодействия с клоном.</p>
+      <p>Уважение любого члена формирования, вне зависимости от нарушения.</p>
     `
   },
   hierarchy: {
     title: 'Иерархия и медали',
     content: `
       <h3>Иерархия Ударного взвода</h3>
-      <p><b>Рядовой состав:</b></p>
-      <ul>
-        <li>Recruit SP (R-SP) — Рекрут</li>
-        <li>Private SP (PVT-SP) — Рядовой</li>
-        <li>Corporal SP (CPL-SP) — Младший сержант</li>
-      </ul>
-      <p><b>Сержантский состав:</b></p>
-      <ul>
-        <li>Sergeant SP (SGT-SP) — Сержант</li>
-        <li>Staff Sergeant SP (SSGT-SP) — Старший сержант</li>
-      </ul>
-      <p><b>Офицерский состав:</b></p>
-      <ul>
-        <li>Officer SP (OFC-SP) — Офицер</li>
-        <li>Deputy Commander SP (DEP-SP) — Заместитель командира</li>
-        <li>Commander SP (CO-SP) — Командир взвода</li>
-        <li>Curator SP (CUR-SP) — Куратор</li>
-      </ul>
+      <p><b>Рядовой состав:</b> Recruit SP, Private SP, Corporal SP.</p>
+      <p><b>Сержантский состав:</b> Sergeant SP, Staff Sergeant SP.</p>
+      <p><b>Офицерский состав:</b> Officer SP, Deputy Commander SP, Commander SP, Curator SP.</p>
       <h3>Медали Ударного корпуса</h3>
       <ul>
-        <li>🎖️ Медаль «За отвагу» — За исключительное мужество в бою</li>
-        <li>🏅 Медаль «За верность» — За долгую и безупречную службу</li>
-        <li>⭐ Звезда «Боевая» — За участие в боевых операциях</li>
-        <li>📜 Грамота благодарности — За инициативность и добросовестность</li>
+        <li>🎖️ Медаль «За отвагу»</li>
+        <li>🏅 Медаль «За верность»</li>
+        <li>⭐ Звезда «Боевая»</li>
       </ul>
     `
   }
 };
 
-// ===== REPORT GENERATOR DATA =====
-const REPORT_TEMPLATES = {
-  event: {
-    name: 'Обычный рапорт (Событие)',
-    template: `Рапорт №[NUMBER]
-[1] @
-[2] @
-[3] В каком событии Вы принимали участие: [EVENT]
-[4] [DESCRIPTION]`
-  },
-  punishment: {
-    name: 'Рапорт наказания (ДВ/ДН/СКТ)',
-    template: `Рапорт наказания №[NUMBER]
-[1] @
-[2] @
-[3] Тип наказания (ДВ/ДН/СКТ): [TYPE]
-[4] @[👮] Ударный Клон
-[5] Ссылка на доказательство: [LINK]`
-  },
-  search: {
-    name: 'Подача в розыск',
-    template: `Подача в розыск №[NUMBER]
-[1] @
-[2] @
-[3] Причина розыска (Был задержан/Приказ/Прочее): [REASON]
-[4] @[👮] Ударный Клон
-[5] Ссылка из канала 《📚》доклады-ук: [LINK]`
-  },
-  reprimand: {
-    name: 'Выговор УК',
-    template: `Выговор УК №[NUMBER]
-[1] @
-[2] @
-[3] Тип выговора (устный/письменный): [TYPE]
-[4] Причина: [REASON]
-[5] @[🗒️] Интендант УК`
-  }
-};
+window.DECREES_DATA = [
+  { title: "Постановление №1: О рации", body: "Все бойцы обязаны находиться на основной частоте взвода во время службы." },
+  { title: "Постановление №2: О докладах", body: "Доклады о состоянии постов каждые 15 минут." },
+  { title: "Постановление №3: О форме", body: "Ношение неуставной формы в ЗК запрещено." }
+];
 
-// ===== INITIALIZE DATABASE =====
+// ===== DATABASE CORE =====
 function initializeDatabase() {
-  const existing = localStorage.getItem(STORAGE_KEY);
-  if (existing) return;
-
-  const initialData = {
-    users: [
-      { id: '76561198000000001', nick: 'Admin', callsign: 'ADMIN', password: 'admin', role: 'site_admin' }
-    ],
-    reports: [],
-    roles: {}
-  };
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+  if (!localStorage.getItem(STORAGE_KEY)) {
+    const initialDB = {
+      users: [
+        { id: '76561198000000001', nick: 'Владелец сайта', callsign: 'Site Admin', password: 'admin', role: 'site_admin' }
+      ],
+      reports: [],
+      roles: {}
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDB));
+  }
 }
 
 function getDatabase() {
@@ -306,16 +203,6 @@ function getDatabase() {
 
 function saveDatabase(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-// ===== VIEW MANAGEMENT =====
-function showView(viewName) {
-  document.querySelectorAll('[data-view]').forEach(v => v.style.display = 'none');
-  const view = document.querySelector(`[data-view="${viewName}"]`);
-  if (view) view.style.display = 'block';
-  
-  document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-  document.querySelector(`[data-nav="${viewName}"]`)?.classList.add('active');
 }
 
 // ===== AUTHENTICATION =====
@@ -358,103 +245,74 @@ function logout() {
   location.reload();
 }
 
-// ===== REPORT GENERATION =====
-function generateReport(type, data) {
-  const template = REPORT_TEMPLATES[type].template;
-  let report = template;
-  
-  const number = Math.floor(Math.random() * 1000);
-  report = report.replace('[NUMBER]', number);
-  
-  Object.keys(data).forEach(key => {
-    report = report.replace(`[${key.toUpperCase()}]`, data[key] || '');
-  });
-  
-  return report;
-}
-
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => {
-    alert('Рапорт скопирован в буфер обмена!');
-  });
-}
-
-// ===== UI INITIALIZATION =====
-document.addEventListener('DOMContentLoaded', () => {
-  initializeDatabase();
-  
+// ===== UI LOGIC =====
+function updateUI() {
   const currentUserId = PersistentStorage.getSession();
   const db = getDatabase();
-  const currentUser = currentUserId ? db.users.find(u => u.id === currentUserId) : null;
+  const user = currentUserId ? db.users.find(u => u.id === currentUserId) : null;
   
-  // Update UI based on auth status
-  if (currentUser) {
-    document.querySelector('.hero')?.style.display = 'none';
-    document.querySelector('.profile-button')?.style.display = 'inline-block';
-    document.querySelector('[data-nav="reports"]')?.style.display = 'block';
-    document.querySelector('[data-nav="cabinet"]')?.style.display = 'block';
-    
-    showView('base');
-  } else {
-    showView('home');
-  }
-  
-  // Modal tabs
-  const loginTab = document.querySelector('[data-tab="login"]');
-  const registerTab = document.querySelector('[data-tab="register"]');
-  
-  if (loginTab) {
-    loginTab.addEventListener('click', () => {
-      document.querySelectorAll('[data-tab-content]').forEach(el => el.style.display = 'none');
-      document.querySelector('[data-tab-content="login"]').style.display = 'block';
-      document.querySelectorAll('[data-tab]').forEach(el => el.classList.remove('active'));
-      loginTab.classList.add('active');
-    });
-  }
-  
-  if (registerTab) {
-    registerTab.addEventListener('click', () => {
-      document.querySelectorAll('[data-tab-content]').forEach(el => el.style.display = 'none');
-      document.querySelector('[data-tab-content="register"]').style.display = 'block';
-      document.querySelectorAll('[data-tab]').forEach(el => el.classList.remove('active'));
-      registerTab.classList.add('active');
-    });
-  }
-  
-  // Base section tabs
-  document.querySelectorAll('[data-base-tab]').forEach(tab => {
-    tab.addEventListener('click', (e) => {
-      const tabName = e.target.dataset.baseTab;
-      document.querySelectorAll('[data-base-content]').forEach(el => el.style.display = 'none');
-      document.querySelector(`[data-base-content="${tabName}"]`).style.display = 'block';
-      document.querySelectorAll('[data-base-tab]').forEach(el => el.classList.remove('active'));
-      e.target.classList.add('active');
-    });
-  });
-  
-  // Profile edit
-  document.querySelector('.profile-button')?.addEventListener('click', () => {
-    if (currentUser) {
-      document.querySelector('[data-modal="profile"]').style.display = 'block';
-      document.querySelector('[name="edit-nick"]').value = currentUser.nick;
-      document.querySelector('[name="edit-callsign"]').value = currentUser.callsign;
+  const guestStatus = document.querySelector('.hero-status .status-card');
+  const navBase = document.querySelector('[data-nav="base"]');
+  const navReports = document.querySelector('[data-nav="reports"]');
+  const navCabinet = document.querySelector('[data-nav="cabinet"]');
+  const profileBtn = document.getElementById('profileBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const heroButtons = document.querySelector('.hero-buttons');
+  const heroSection = document.querySelector('.hero');
+
+  if (user) {
+    // Logged in
+    if (guestStatus) {
+      guestStatus.innerHTML = `
+        <div class="status-indicator online"></div>
+        <h3>${user.nick}</h3>
+        <p>${user.callsign}</p>
+        <p>${roleByKey(user.role).title}</p>
+      `;
     }
-  });
+    
+    if (navBase) navBase.style.display = 'block';
+    if (navReports) navReports.style.display = 'block';
+    
+    const role = roleByKey(user.role);
+    if (navCabinet && role.canEdit) navCabinet.style.display = 'block';
+    
+    if (profileBtn) profileBtn.hidden = false;
+    if (logoutBtn) logoutBtn.hidden = false;
+    
+    if (heroButtons) {
+      heroButtons.innerHTML = `<button class="btn primary" onclick="switchView('base')">Перейти в Базу</button>`;
+    }
+  } else {
+    // Guest
+    if (navBase) navBase.style.display = 'none';
+    if (navReports) navReports.style.display = 'none';
+    if (navCabinet) navCabinet.style.display = 'none';
+    if (profileBtn) profileBtn.hidden = true;
+    if (logoutBtn) logoutBtn.hidden = true;
+  }
+}
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', () => {
+  initializeDatabase();
+  updateUI();
   
-  // Report generation
-  document.querySelectorAll('[data-report-type]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const type = e.target.dataset.reportType;
-      const form = document.querySelector(`[data-report-form="${type}"]`);
-      if (form) {
-        const inputs = form.querySelectorAll('input, textarea');
-        const data = {};
-        inputs.forEach(input => {
-          data[input.name] = input.value;
-        });
-        const report = generateReport(type, data);
-        copyToClipboard(report);
-      }
+  // Decrees population
+  const decreeList = document.getElementById('decreeList');
+  const decreeFullList = document.getElementById('decreeFullList');
+  if (decreeList && window.DECREES_DATA) {
+    decreeList.innerHTML = window.DECREES_DATA.map(d => `<div class="decree-card"><h3>${d.title}</h3><p>${d.body}</p></div>`).join('');
+  }
+  if (decreeFullList && window.DECREES_DATA) {
+    decreeFullList.innerHTML = window.DECREES_DATA.map(d => `<div class="decree-card"><h3>${d.title}</h3><p>${d.body}</p></div>`).join('');
+  }
+
+  // Base Content population
+  if (window.BASE_SECTIONS) {
+    Object.keys(window.BASE_SECTIONS).forEach(key => {
+      const el = document.querySelector(`[data-base-content="${key}"]`);
+      if (el) el.innerHTML = window.BASE_SECTIONS[key].content;
     });
-  });
+  }
 });
